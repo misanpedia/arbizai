@@ -28,7 +28,7 @@ const AdminManagement = () => {
   const [permissions, setPermissions] = useState<any[]>([]);
 
   const fetchData = async () => {
-    const { data: roles } = await supabase.from("user_roles").select("*").in("role", ["admin", "manager", "finance"]);
+    const { data: roles } = await supabase.from("user_roles").select("*").in("role", ["admin", "moderator", "user"] as any);
     if (roles) {
       const userIds = roles.map(r => r.user_id);
       const { data: profs } = userIds.length > 0

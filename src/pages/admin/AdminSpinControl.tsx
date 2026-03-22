@@ -50,7 +50,7 @@ const AdminSpinControl = () => {
     if (!form.label) return;
     const payload = {
       label: form.label,
-      amount: parseFloat(form.amount),
+      reward_value: parseFloat(form.amount),
       reward_type: form.reward_type,
       probability: parseFloat(form.probability),
     };

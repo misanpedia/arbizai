@@ -49,7 +49,7 @@ const Team = () => {
       if (prof) setProfile(prof);
 
       const { data: members } = await supabase.rpc("get_downline_with_stats", { p_user_id: user.id });
-      if (members) setAllMembers(members as DownlineMember[]);
+      if (members) setAllMembers(members as unknown as DownlineMember[]);
       setLoading(false);
     };
     fetchData();

@@ -69,10 +69,10 @@ const AdminUsers = () => {
       const planIds = [...new Set(investmentsRes.data.map(i => i.plan_id))];
       const { data: plans } = await supabase.from("investment_plans").select("id, display_name").in("id", planIds);
       const planMap = new Map(plans?.map(p => [p.id, p.display_name]) || []);
-      activeInvestments = investmentsRes.data.map(i => ({
+      activeInvestments = investmentsRes.data.map((i: any) => ({
         amount: i.amount,
         plan_name: planMap.get(i.plan_id) || "Unknown",
-        total_profit: i.total_profit,
+        total_profit: 0,
       }));
     }
 
