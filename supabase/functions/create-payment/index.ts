@@ -2,8 +2,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const RAZCRYPTO_API = "https://razcryptogateway.com/api/v2";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,50 +26,66 @@ Deno.serve(async (req) => {
     );
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { amount, currency = "usd" } = await req.json();
+    const { amount, chain = "BSC", currency = "USDT" } = await req.json();
     if (!amount || amount <= 0) throw new Error("Invalid amount");
 
-    const NOWPAYMENTS_API_KEY = Deno.env.get("NOWPAYMENTS_API_KEY");
-    if (!NOWPAYMENTS_API_KEY) throw new Error("NOWPayments API key not configured");
+    const RAZ_PUBLIC_KEY = Deno.env.get("RAZ_PUBLIC_KEY");
+    if (!RAZ_PUBLIC_KEY) throw new Error("RazCrypto Public Key not configured");
 
-    // Create NOWPayments invoice
-    const response = await fetch("https://api.nowpayments.io/v1/invoice", {
+    // Create RazCrypto payment
+    const response = await fetch(`${RAZCRYPTO_API}/payments/create`, {
       method: "POST",
       headers: {
-        "x-api-key": NOWPAYMENTS_API_KEY,
         "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-Public-Key-Id": RAZ_PUBLIC_KEY,
       },
       body: JSON.stringify({
-        price_amount: amount,
-        price_currency: currency,
-        order_id: `deposit_${user.id}_${Date.now()}`,
-        order_description: `Deposit $${amount} USDT`,
-        ipn_callback_url: `${supabaseUrl}/functions/v1/nowpayments-webhook`,
-        success_url: `${req.headers.get("origin") || supabaseUrl}/dashboard`,
-        cancel_url: `${req.headers.get("origin") || supabaseUrl}/deposit`,
+        amount,
+        chain,
+        currency,
+        email: user.email || "",
+        callback_url: `${supabaseUrl}/functions/v1/razcrypto-webhook`,
+        return_json: "true",
+        custom_data: {
+          user_id: user.id,
+          timestamp: Date.now(),
+        },
       }),
     });
 
     if (!response.ok) {
       const errBody = await response.text();
-      throw new Error(`NOWPayments API error [${response.status}]: ${errBody}`);
+      throw new Error(`RazCrypto API error [${response.status}]: ${errBody}`);
     }
 
     const data = await response.json();
+
+    if (data.status !== "success") {
+      throw new Error(data.message || "Failed to create payment");
+    }
 
     // Create pending transaction
     await supabase.from("transactions").insert({
       user_id: user.id,
       type: "deposit",
-      amount,
-      currency: "USDT",
+      amount: data.amount || amount,
+      currency: currency,
       status: "pending",
-      description: `Auto deposit $${amount} via NOWPayments`,
-      tx_hash: data.id?.toString() || null,
+      description: `Deposit ${amount} ${currency} via RazCrypto (${chain})`,
+      tx_hash: data.payment_id || null,
+      network: chain,
     });
 
     return new Response(
-      JSON.stringify({ invoice_url: data.invoice_url, id: data.id }),
+      JSON.stringify({
+        checkout_url: data.checkout_page || data.hosted_page || data.payment_page,
+        payment_id: data.payment_id,
+        amount: data.amount,
+        address: data.address,
+        qr_code: data.qr_code || data.qr_url,
+        expiry_minutes: data.expiry_minutes,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
