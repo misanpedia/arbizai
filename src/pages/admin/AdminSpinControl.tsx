@@ -31,7 +31,7 @@ const AdminSpinControl = () => {
   const fetchRewards = async () => {
     setLoading(true);
     const [rewardsRes, spinsRes, limitRes] = await Promise.all([
-      supabase.from("spin_rewards").select("*").order("amount", { ascending: true }),
+      supabase.from("spin_rewards").select("*").order("reward_value", { ascending: true }),
       supabase.from("user_spins").select("id", { count: "exact", head: true }),
       supabase.from("system_settings").select("value").eq("key", "spin_daily_limit").maybeSingle(),
     ]);
