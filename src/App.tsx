@@ -39,7 +39,6 @@ import AdminSystemMonitor from "./pages/admin/AdminSystemMonitor";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminManagement from "./pages/admin/AdminManagement";
 import AdminDepositWallets from "./pages/admin/AdminDepositWallets";
-import AdminTransfers from "./pages/admin/AdminTransfers";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminSpinControl from "./pages/admin/AdminSpinControl";
 import AdminCheckinSettings from "./pages/admin/AdminCheckinSettings";
@@ -65,7 +64,6 @@ import SecurityPage from "./pages/SecurityPage";
 import Announcements from "./pages/Announcements";
 import ProfitCalculator from "./pages/ProfitCalculator";
 import ProfitHistory from "./pages/ProfitHistory";
-import Transfer from "./pages/Transfer";
 
 const queryClient = new QueryClient();
 
@@ -105,7 +103,6 @@ const App = () => (
             <Route path="/announcements" element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
             <Route path="/calculator" element={<ProtectedRoute><ProfitCalculator /></ProtectedRoute>} />
             <Route path="/profit-history" element={<ProtectedRoute><ProfitHistory /></ProtectedRoute>} />
-            <Route path="/transfer" element={<ProtectedRoute><Transfer /></ProtectedRoute>} />
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
@@ -123,7 +120,6 @@ const App = () => (
             <Route path="/admin/system-monitor" element={<AdminRoute><AdminSystemMonitor /></AdminRoute>} />
             <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
             <Route path="/admin/admin-management" element={<AdminRoute><AdminManagement /></AdminRoute>} />
-            <Route path="/admin/transfers" element={<AdminRoute><AdminTransfers /></AdminRoute>} />
             <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
             <Route path="/admin/spin-control" element={<AdminRoute><AdminSpinControl /></AdminRoute>} />
             <Route path="/admin/checkin-settings" element={<AdminRoute><AdminCheckinSettings /></AdminRoute>} />

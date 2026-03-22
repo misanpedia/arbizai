@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Cpu, Play, Clock, DollarSign, History, Filter } from "lucide-react";
+import { Cpu, Play, DollarSign, History, Filter } from "lucide-react";
 
 const AdminProfitEngine = () => {
   const { toast } = useToast();
@@ -16,9 +16,9 @@ const AdminProfitEngine = () => {
   const [dateTo, setDateTo] = useState("");
 
   const fetchLogs = async () => {
-    let query = supabase.from("profit_engine_logs").select("*").order("executed_at", { ascending: false }).limit(50);
-    if (dateFrom) query = query.gte("executed_at", `${dateFrom}T00:00:00`);
-    if (dateTo) query = query.lte("executed_at", `${dateTo}T23:59:59`);
+    let query = supabase.from("profit_engine_logs").select("*").order("created_at", { ascending: false }).limit(50);
+    if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
+    if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
     const { data } = await query;
     if (data) setLogs(data);
   };
@@ -49,7 +49,6 @@ const AdminProfitEngine = () => {
       const { data, error } = await supabase.functions.invoke("daily-profit");
       if (error) throw error;
       toast({ title: "Profit engine executed", description: `Processed: ${data?.processed || 0} investments` });
-      // Refresh data
       const today = new Date().toISOString().split("T")[0];
       const [todayRes] = await Promise.all([
         supabase.from("profits").select("amount").eq("profit_date", today),
@@ -118,15 +117,15 @@ const AdminProfitEngine = () => {
               <div key={log.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {new Date(log.executed_at).toLocaleString()}
+                    {new Date(log.created_at).toLocaleString()}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    {log.trigger_type === "cron" ? "⏰ Cron" : "🖐 Manual"} · {log.status}
+                    {log.status} · {log.run_date}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-success">{log.processed}/{log.total_investments}</p>
-                  <p className="text-[10px] text-muted-foreground">processed</p>
+                  <p className="text-sm font-medium text-success">${Number(log.total_profit_distributed || 0).toFixed(2)}</p>
+                  <p className="text-[10px] text-muted-foreground">{log.total_users || 0} users</p>
                 </div>
               </div>
             ))}
@@ -141,10 +140,12 @@ const AdminProfitEngine = () => {
               <div key={p.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">${Number(p.amount).toFixed(4)}</p>
-                  <p className="text-[10px] text-muted-foreground">{p.profit_date} · Volatility: {Number(p.market_volatility || 0).toFixed(2)}%</p>
+                  <p className="text-[10px] text-muted-foreground">{p.profit_date}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Spread: {Number(p.spread_volume || 0).toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(p as any).investments?.investment_plans?.display_name || "—"}
+                  </p>
                 </div>
               </div>
             ))}

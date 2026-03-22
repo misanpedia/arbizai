@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDownCircle, ArrowUpCircle, TrendingUp, Wallet, Calendar, Filter, ArrowRightLeft } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, TrendingUp, Wallet, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 
 const TYPE_ICONS: Record<string, any> = {
@@ -11,7 +11,6 @@ const TYPE_ICONS: Record<string, any> = {
   investment: TrendingUp,
   profit: Wallet,
   commission: Wallet,
-  transfer: ArrowRightLeft,
   fee: ArrowUpCircle,
   penalty: ArrowUpCircle,
 };
@@ -22,7 +21,6 @@ const TYPE_COLORS: Record<string, string> = {
   investment: "text-primary",
   profit: "text-success",
   commission: "text-accent",
-  transfer: "text-secondary",
   fee: "text-destructive",
   penalty: "text-destructive",
 };
@@ -49,7 +47,7 @@ const History = () => {
     });
   }, [user, filter]);
 
-  const filters = ["all", "deposit", "withdraw", "investment", "profit", "commission", "transfer"];
+  const filters = ["all", "deposit", "withdraw", "investment", "profit", "commission"];
 
   return (
     <DashboardLayout title="History">
@@ -88,8 +86,8 @@ const History = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-bold font-mono ${["deposit", "profit", "commission"].includes(tx.type) ? "text-success" : tx.type === "transfer" && (tx.description?.startsWith("Received") || tx.description?.startsWith("Menerima")) ? "text-success" : "text-foreground"}`}>
-                      {["deposit", "profit", "commission"].includes(tx.type) ? "+" : tx.type === "transfer" && (tx.description?.startsWith("Received") || tx.description?.startsWith("Menerima")) ? "+" : "-"}${Number(tx.amount).toFixed(2)}
+                    <p className={`text-sm font-bold font-mono ${["deposit", "profit", "commission"].includes(tx.type) ? "text-success" : "text-foreground"}`}>
+                      {["deposit", "profit", "commission"].includes(tx.type) ? "+" : "-"}${Number(tx.amount).toFixed(2)}
                     </p>
                     {tx.fee > 0 && <p className="text-[10px] text-warning">fee: ${Number(tx.fee).toFixed(2)}</p>}
                     <p className="text-[10px] text-muted-foreground">{tx.currency}</p>

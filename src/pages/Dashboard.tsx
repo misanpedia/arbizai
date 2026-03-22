@@ -2,15 +2,14 @@ import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
   Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp,
   Users, Award, BarChart3, LogOut,
-  Activity, Cpu, Wifi, ShieldCheck, Shield, Coins, Bell, ArrowRightLeft,
+  Activity, Cpu, Wifi, ShieldCheck, Shield, Coins, Bell,
   Zap, History
 } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { DefiActivityFeed } from "@/components/dashboard/DefiActivityFeed";
 
@@ -23,7 +22,6 @@ interface WalletData {
 const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   useNotifications();
-  const navigate = useNavigate();
   const [wallets, setWallets] = useState<WalletData[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [totalInvested, setTotalInvested] = useState(0);
@@ -76,7 +74,6 @@ const Dashboard = () => {
 
   const usdtWallet = useMemo(() => wallets.find(w => w.currency === "USDT"), [wallets]);
   const totalBalance = usdtWallet?.balance || 0;
-  const bonusBalance = (usdtWallet as any)?.bonus_balance ? Number((usdtWallet as any).bonus_balance) : 0;
 
   if (authLoading || (!dataLoaded && user)) {
     return (
@@ -92,14 +89,12 @@ const Dashboard = () => {
     } catch (e) {
       console.error("Logout error:", e);
     }
-    // Force full page reload to clear all state
     window.location.href = "/";
   };
 
   const quickMenuItems = [
     { icon: ArrowDownCircle, label: "Deposit", color: "text-success", path: "/deposit" },
     { icon: ArrowUpCircle, label: "Withdraw", color: "text-warning", path: "/withdraw" },
-    { icon: ArrowRightLeft, label: "Transfer", color: "text-cyan-400", path: "/transfer" },
     { icon: TrendingUp, label: "AI Bot", color: "text-primary", path: "/invest" },
     { icon: BarChart3, label: "My AI Bot", color: "text-secondary", path: "/investments" },
     { icon: Users, label: "My Team", color: "text-accent", path: "/team" },
@@ -142,9 +137,6 @@ const Dashboard = () => {
         <div className="text-center">
           <p className="text-primary-foreground/70 text-sm">Total Balance</p>
           <h2 className="text-3xl font-display font-bold text-primary-foreground">${totalBalance.toFixed(2)}</h2>
-          {bonusBalance > 0 && (
-            <p className="text-primary-foreground/60 text-xs mt-0.5">+ ${bonusBalance.toFixed(2)} bonus (activate only)</p>
-          )}
         </div>
       </header>
 
@@ -163,7 +155,7 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Quick Menu - 4x2 grid */}
+      {/* Quick Menu */}
       <div className="px-4 mt-6">
         <h3 className="font-display font-semibold text-foreground mb-3">Quick Menu</h3>
         <div className="grid grid-cols-4 gap-3">
@@ -245,7 +237,7 @@ function ArbitrageScanner() {
     <div className="glass-strong rounded-2xl p-4 space-y-3 overflow-hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu className="w-5 h-5 text-primary animate-pulse-glow" />
+          <Cpu className="w-5 h-5 text-primary animate-pulse" />
           <span className="text-sm font-medium text-foreground">AI Engine Active</span>
         </div>
         <div className="flex items-center gap-1.5">
