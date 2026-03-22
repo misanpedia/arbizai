@@ -56,9 +56,9 @@ const KYCUpload = () => {
     const { error: dbError } = await supabase.from("kyc_documents").insert({
       user_id: user.id,
       document_type: selectedType,
-      document_url: filePath,
+      file_url: filePath,
       status: "pending",
-    });
+    } as any);
 
     if (dbError) {
       toast({ title: "Error", description: dbError.message, variant: "destructive" });

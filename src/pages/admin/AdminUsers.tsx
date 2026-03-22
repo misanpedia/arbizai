@@ -59,7 +59,7 @@ const AdminUsers = () => {
     const [walletsRes, commissionsRes, investmentsRes, depositsRes, withdrawalsRes] = await Promise.all([
       supabase.from("wallets").select("currency, balance, bonus_balance, frozen_balance").eq("user_id", user.user_id),
       supabase.from("commissions").select("amount").eq("user_id", user.user_id),
-      supabase.from("investments").select("amount, total_profit, plan_id, status").eq("user_id", user.user_id).eq("status", "active"),
+      supabase.from("investments").select("amount, plan_id, status").eq("user_id", user.user_id).eq("status", "active"),
       supabase.from("transactions").select("amount").eq("user_id", user.user_id).eq("type", "deposit").in("status", ["approved", "completed"]),
       supabase.from("transactions").select("amount").eq("user_id", user.user_id).eq("type", "withdraw").in("status", ["approved", "completed"]),
     ]);
@@ -69,10 +69,10 @@ const AdminUsers = () => {
       const planIds = [...new Set(investmentsRes.data.map(i => i.plan_id))];
       const { data: plans } = await supabase.from("investment_plans").select("id, display_name").in("id", planIds);
       const planMap = new Map(plans?.map(p => [p.id, p.display_name]) || []);
-      activeInvestments = investmentsRes.data.map(i => ({
+      activeInvestments = investmentsRes.data.map((i: any) => ({
         amount: i.amount,
         plan_name: planMap.get(i.plan_id) || "Unknown",
-        total_profit: i.total_profit,
+        total_profit: 0,
       }));
     }
 

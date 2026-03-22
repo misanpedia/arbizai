@@ -31,11 +31,11 @@ const AdminSpinControl = () => {
   const fetchRewards = async () => {
     setLoading(true);
     const [rewardsRes, spinsRes, limitRes] = await Promise.all([
-      supabase.from("spin_rewards").select("*").order("amount", { ascending: true }),
+      supabase.from("spin_rewards").select("*").order("reward_value", { ascending: true }),
       supabase.from("user_spins").select("id", { count: "exact", head: true }),
       supabase.from("system_settings").select("value").eq("key", "spin_daily_limit").maybeSingle(),
     ]);
-    if (rewardsRes.data) setRewards(rewardsRes.data);
+    if (rewardsRes.data) setRewards(rewardsRes.data as any);
     setTotalSpins(spinsRes.count || 0);
     if (limitRes.data) {
       const val = typeof limitRes.data.value === "string" ? limitRes.data.value.replace(/"/g, "") : String(limitRes.data.value);
@@ -50,7 +50,7 @@ const AdminSpinControl = () => {
     if (!form.label) return;
     const payload = {
       label: form.label,
-      amount: parseFloat(form.amount),
+      reward_value: parseFloat(form.amount),
       reward_type: form.reward_type,
       probability: parseFloat(form.probability),
     };

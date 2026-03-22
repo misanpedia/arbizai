@@ -66,7 +66,7 @@ const DailyCheckin = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      await supabase.rpc("atomic_reward_credit", { p_user_id: user.id, p_currency: "USDT", p_amount: reward });
+      await supabase.rpc("atomic_reward_credit", { p_user_id: user.id, p_amount: reward, p_description: `Daily checkin day ${newStreak}` });
 
       setTodayCheckedIn(true);
       setStreak(newStreak);
@@ -82,7 +82,7 @@ const DailyCheckin = () => {
   const handleConvert = async () => {
     if (!user || converting) return;
     setConverting(true);
-    const { data, error } = await supabase.rpc("convert_reward_to_balance", { p_user_id: user.id, p_currency: "USDT" });
+    const { data, error } = await supabase.rpc("convert_reward_to_balance", { p_user_id: user.id, p_amount: rewardBalance });
     if (error || data === false) {
       toast({ title: "Cannot convert", description: "Minimum $5.00 required to convert", variant: "destructive" });
     } else {
