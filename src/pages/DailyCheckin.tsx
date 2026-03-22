@@ -66,7 +66,7 @@ const DailyCheckin = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      await supabase.rpc("atomic_reward_credit", { p_user_id: user.id, p_currency: "USDT", p_amount: reward });
+      await supabase.rpc("atomic_reward_credit", { p_user_id: user.id, p_amount: reward, p_description: `Daily checkin day ${newStreak}` });
 
       setTodayCheckedIn(true);
       setStreak(newStreak);
