@@ -23,7 +23,13 @@ const FALLBACK_NETWORKS: DepositNetwork[] = [
   { id: "ERC20", network: "ERC20", address: "", warning: "Only send USDT on Ethereum Network (ERC20)", is_active: true },
 ];
 
-const DEPOSIT_EXPIRY_MINUTES = 60; // 1 hour countdown
+const CHAIN_MAP: Record<string, string> = {
+  BEP20: "BSC",
+  ERC20: "ETH",
+  POLYGON: "POLYGON",
+};
+
+const DEPOSIT_EXPIRY_MINUTES = 60;
 
 const CountdownTimer = ({ createdAt, onExpired }: { createdAt: string; onExpired?: () => void }) => {
   const [remaining, setRemaining] = useState("");
@@ -31,7 +37,6 @@ const CountdownTimer = ({ createdAt, onExpired }: { createdAt: string; onExpired
 
   useEffect(() => {
     const expiryTime = new Date(createdAt).getTime() + DEPOSIT_EXPIRY_MINUTES * 60 * 1000;
-
     const tick = () => {
       const now = Date.now();
       const diff = expiryTime - now;
@@ -45,7 +50,6 @@ const CountdownTimer = ({ createdAt, onExpired }: { createdAt: string; onExpired
       const secs = Math.floor((diff % 60000) / 1000);
       setRemaining(`${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`);
     };
-
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
@@ -69,6 +73,8 @@ const Deposit = () => {
   const [txHash, setTxHash] = useState("");
   const [loading, setLoading] = useState(false);
   const [pendingDeposits, setPendingDeposits] = useState<any[]>([]);
+  const [selectedChain, setSelectedChain] = useState("BSC");
+  const [selectedCurrency, setSelectedCurrency] = useState("USDT");
 
   useEffect(() => {
     const fetchWallets = async () => {
@@ -88,7 +94,6 @@ const Deposit = () => {
     fetchWallets();
   }, []);
 
-  // Fetch user's pending deposits
   useEffect(() => {
     if (!user) return;
     const fetchPending = async () => {
@@ -111,8 +116,6 @@ const Deposit = () => {
 
   const handleExpireDeposit = async (id: string) => {
     await supabase.from("transactions").update({ status: "cancelled" as const }).eq("id", id);
-    
-    // Send expiry notification to user
     if (user) {
       await supabase.from("notifications").insert({
         user_id: user.id,
@@ -121,7 +124,6 @@ const Deposit = () => {
         type: "info",
       });
     }
-    
     setPendingDeposits(prev => prev.map(d => d.id === id ? { ...d, status: "cancelled" } : d));
     toast({ title: "Deposit Expired", description: "Your deposit request has expired. You can submit a new one.", variant: "destructive" });
   };
@@ -154,14 +156,20 @@ const Deposit = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: { amount: parseFloat(amount), currency: "usd" },
+        body: {
+          amount: parseFloat(amount),
+          chain: selectedChain,
+          currency: selectedCurrency,
+        },
       });
       if (error) throw error;
-      if (data?.invoice_url) {
-        window.open(data.invoice_url, "_blank");
+      if (data?.checkout_url) {
+        window.open(data.checkout_url, "_blank");
         toast({ title: "Payment page opened", description: "Complete your payment in the new tab." });
+      } else if (data?.error) {
+        throw new Error(data.error);
       } else {
-        throw new Error("No invoice URL returned");
+        throw new Error("No checkout URL returned");
       }
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
@@ -171,13 +179,21 @@ const Deposit = () => {
 
   const activePending = pendingDeposits.filter(d => d.status === "pending");
 
+  const chains = [
+    { id: "BSC", label: "BSC (BEP20)" },
+    { id: "ETH", label: "Ethereum" },
+    { id: "POLYGON", label: "Polygon" },
+  ];
+
+  const currencies = ["USDT", "USDC", "DAI"];
+
   return (
     <DashboardLayout title="Deposit">
       <div className="max-w-lg mx-auto space-y-6">
         {/* Method Selector */}
         <div className="flex gap-2">
           <button onClick={() => setMethod("auto")} className={`flex-1 py-3 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 ${method === "auto" ? "gradient-primary text-primary-foreground" : "glass text-muted-foreground hover:text-foreground"}`}>
-            <Zap className="w-4 h-4" /> Auto (NOWPayments)
+            <Zap className="w-4 h-4" /> Auto (RazCrypto)
           </button>
           <button onClick={() => setMethod("manual")} className={`flex-1 py-3 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 ${method === "manual" ? "gradient-primary text-primary-foreground" : "glass text-muted-foreground hover:text-foreground"}`}>
             <CreditCard className="w-4 h-4" /> Manual Transfer
@@ -188,15 +204,48 @@ const Deposit = () => {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-strong rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium text-foreground">Instant Crypto Payment</span>
+              <span className="text-sm font-medium text-foreground">RazCrypto Payment</span>
             </div>
-            <p className="text-xs text-muted-foreground">Pay with 150+ cryptocurrencies via NOWPayments. Your deposit will be credited automatically after confirmation.</p>
+            <p className="text-xs text-muted-foreground">Pay with USDT, USDC, or DAI on BSC, Ethereum, or Polygon. Your deposit will be credited automatically after blockchain confirmation.</p>
+
+            {/* Chain Selector */}
+            <div className="space-y-2">
+              <Label>Network</Label>
+              <div className="flex gap-2">
+                {chains.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedChain(c.id)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium transition ${selectedChain === c.id ? "gradient-primary text-primary-foreground" : "glass text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Currency Selector */}
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <div className="flex gap-2">
+                {currencies.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setSelectedCurrency(c)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium transition ${selectedCurrency === c ? "gradient-primary text-primary-foreground" : "glass text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Amount (USD)</Label>
-              <Input type="number" placeholder="Enter amount in USD" value={amount} onChange={(e) => setAmount(e.target.value)} className="glass" />
+              <Input type="number" placeholder="Enter amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="glass" />
             </div>
             <Button onClick={handleAutoDeposit} disabled={loading || !amount || parseFloat(amount) <= 0} className="w-full gradient-primary text-primary-foreground">
-              {loading ? "Processing..." : `Pay $${amount || "0"} with Crypto`}
+              {loading ? "Processing..." : `Pay $${amount || "0"} with ${selectedCurrency}`}
             </Button>
           </motion.div>
         ) : (
@@ -220,10 +269,12 @@ const Deposit = () => {
                     <span className="text-sm font-medium">Send USDT ({network}) to this address</span>
                   </div>
                   <div className="flex items-center gap-2 bg-muted/50 rounded-xl p-3">
-                    <code className="text-xs flex-1 break-all text-foreground">{selected.address}</code>
-                    <button onClick={() => handleCopy(selected.address)} className="p-2 rounded-lg hover:bg-muted transition text-primary">
-                      <Copy className="w-4 h-4" />
-                    </button>
+                    <code className="text-xs flex-1 break-all text-foreground">{selected.address || "No address configured"}</code>
+                    {selected.address && (
+                      <button onClick={() => handleCopy(selected.address)} className="p-2 rounded-lg hover:bg-muted transition text-primary">
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                   <p className="text-xs text-warning">⚠️ {selected.warning}. Sending other tokens may result in permanent loss.</p>
                 </motion.div>
@@ -252,14 +303,14 @@ const Deposit = () => {
           </>
         )}
 
-        {/* Pending deposits warning */}
+        {/* Pending deposits */}
         {activePending.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-strong rounded-2xl p-5 space-y-3">
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-warning" />
               <span className="text-sm font-medium text-foreground">Pending Deposits ({activePending.length})</span>
             </div>
-            <p className="text-xs text-muted-foreground">⚠️ You have deposits awaiting confirmation. Please wait for them to complete before submitting a new deposit.</p>
+            <p className="text-xs text-muted-foreground">⚠️ You have deposits awaiting confirmation.</p>
             <div className="space-y-2">
               {activePending.map(d => (
                 <div key={d.id} className="bg-muted/50 rounded-xl p-3 flex items-center justify-between">
