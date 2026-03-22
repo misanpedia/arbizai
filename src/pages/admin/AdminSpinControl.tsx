@@ -35,7 +35,7 @@ const AdminSpinControl = () => {
       supabase.from("user_spins").select("id", { count: "exact", head: true }),
       supabase.from("system_settings").select("value").eq("key", "spin_daily_limit").maybeSingle(),
     ]);
-    if (rewardsRes.data) setRewards(rewardsRes.data);
+    if (rewardsRes.data) setRewards(rewardsRes.data as any);
     setTotalSpins(spinsRes.count || 0);
     if (limitRes.data) {
       const val = typeof limitRes.data.value === "string" ? limitRes.data.value.replace(/"/g, "") : String(limitRes.data.value);
