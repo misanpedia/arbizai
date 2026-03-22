@@ -4,8 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   BarChart3, Users, ShieldCheck, ArrowDownCircle, ArrowUpCircle,
   TrendingUp, Cpu, Wallet, GitBranch, FileText, Bell, Shield,
-  Activity, Settings, UserCog, Menu, X, ChevronLeft, LogOut, Zap, Coins, ArrowRightLeft,
-  Megaphone, Flame, CalendarCheck
+  Activity, Settings, UserCog, Menu, X, ChevronLeft, LogOut, Zap, Coins,
+  Megaphone, CalendarCheck
 } from "lucide-react";
 
 const menuItems = [
@@ -19,7 +19,6 @@ const menuItems = [
   { path: "/admin/plans", label: "Investment Plans", icon: TrendingUp },
   { path: "/admin/profit-engine", label: "Profit Engine", icon: Cpu },
   { path: "/admin/wallets", label: "Wallets", icon: Wallet },
-  { path: "/admin/transfers", label: "Transfers", icon: ArrowRightLeft },
   { path: "/admin/referral", label: "Referral", icon: GitBranch },
   { path: "/admin/reports", label: "Reports", icon: FileText },
   { path: "/admin/announcements", label: "Announcements", icon: Megaphone },
@@ -40,12 +39,10 @@ export function AdminLayout({ children, title }: { children: ReactNode; title: s
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar overlay (mobile) */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-card border-r border-border z-50 flex flex-col transition-transform lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="p-4 border-b border-border flex items-center justify-between">
           <Link to="/admin" className="flex items-center gap-2">
@@ -88,7 +85,6 @@ export function AdminLayout({ children, title }: { children: ReactNode; title: s
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border px-4 lg:px-6 py-3 flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-muted/50 text-muted-foreground">

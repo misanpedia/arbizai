@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Users, ArrowDownCircle, ArrowUpCircle, TrendingUp, DollarSign, Activity, ShieldCheck, Cpu, Wallet, GitBranch, Bell, Shield, Settings, ArrowRightLeft, Megaphone, Zap, CalendarCheck, Clock } from "lucide-react";
+import { Users, ArrowDownCircle, ArrowUpCircle, TrendingUp, DollarSign, Activity, ShieldCheck, Cpu, Wallet, GitBranch, Bell, Shield, Settings, Megaphone, Zap, CalendarCheck, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -32,14 +32,12 @@ const AdminDashboard = () => {
         pendingWithdrawals: wds.filter(w => w.status === "pending").length,
       });
 
-      // Fetch recent pending deposits & withdrawals with user info
       const [pendingDepsRes, pendingWdsRes, txRes] = await Promise.all([
         supabase.from("transactions").select("id, user_id, amount, currency, created_at, description, wallet_address").eq("type", "deposit").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
         supabase.from("transactions").select("id, user_id, amount, currency, created_at, description, wallet_address").eq("type", "withdraw").eq("status", "pending").order("created_at", { ascending: false }).limit(5),
         supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(10),
       ]);
 
-      // Get user names for pending items
       const allUserIds = [
         ...(pendingDepsRes.data || []).map(d => d.user_id),
         ...(pendingWdsRes.data || []).map(w => w.user_id),
@@ -90,10 +88,8 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Pending Notifications */}
         {(pendingDeposits.length > 0 || pendingWithdrawals.length > 0) && (
           <div className="grid md:grid-cols-2 gap-4">
-            {/* Pending Deposits */}
             {pendingDeposits.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-strong rounded-2xl p-5 border border-success/20">
                 <div className="flex items-center justify-between mb-4">
@@ -124,7 +120,6 @@ const AdminDashboard = () => {
               </motion.div>
             )}
 
-            {/* Pending Withdrawals */}
             {pendingWithdrawals.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="glass-strong rounded-2xl p-5 border border-warning/20">
                 <div className="flex items-center justify-between mb-4">
@@ -166,7 +161,6 @@ const AdminDashboard = () => {
               { icon: ShieldCheck, label: "KYC", path: "/admin/kyc", color: "text-warning" },
               { icon: ArrowDownCircle, label: "Deposits", path: "/admin/deposits", color: "text-success" },
               { icon: ArrowUpCircle, label: "Withdrawals", path: "/admin/withdrawals", color: "text-warning" },
-              { icon: ArrowRightLeft, label: "Transfers", path: "/admin/transfers", color: "text-cyan-400" },
               { icon: TrendingUp, label: "Plans", path: "/admin/plans", color: "text-primary" },
               { icon: TrendingUp, label: "Investments", path: "/admin/investments", color: "text-accent" },
               { icon: Cpu, label: "Profit Engine", path: "/admin/profit-engine", color: "text-accent" },
