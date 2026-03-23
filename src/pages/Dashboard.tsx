@@ -7,7 +7,7 @@ import {
   Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp,
   Users, Award, BarChart3, LogOut,
   Activity, Cpu, Wifi, ShieldCheck, Shield, Coins, Bell,
-  Zap, History
+  Zap, History, Headphones
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NotificationCenter } from "@/components/NotificationCenter";
