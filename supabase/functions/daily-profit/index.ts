@@ -5,6 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// 20-level rebate rates (percentage of downline's daily profit)
+const DEFAULT_REBATE_RATES: Record<number, number> = {
+  1: 10,
+  2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2,
+  11: 1, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1, 17: 1, 18: 1, 19: 1, 20: 1,
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,17 +35,17 @@ Deno.serve(async (req) => {
     let processed = 0;
     let totalDistributed = 0;
 
-    // Get commission settings
+    // Get commission settings (overrides)
     const { data: settingsData } = await supabase
       .from("system_settings")
       .select("key, value")
       .like("key", "commission_l%");
-    
-    const commRates: Record<number, number> = {};
+
+    const commRates: Record<number, number> = { ...DEFAULT_REBATE_RATES };
     settingsData?.forEach((s: any) => {
       const level = parseInt(s.key.replace("commission_l", ""));
       const val = typeof s.value === "string" ? parseFloat(s.value.replace(/"/g, "")) : Number(s.value);
-      if (!isNaN(level) && !isNaN(val)) commRates[level] = val / 100;
+      if (!isNaN(level) && !isNaN(val)) commRates[level] = val;
     });
 
     for (const inv of investments || []) {
@@ -71,26 +78,18 @@ Deno.serve(async (req) => {
 
       // Credit to wallet
       if (inv.auto_compound) {
-        // Add to investment amount
         await supabase
           .from("investments")
           .update({ amount: Number(inv.amount) + profitAmount })
           .eq("id", inv.id);
       } else {
-        // Add to wallet balance
-        await supabase.rpc("atomic_reward_credit", {
-          p_user_id: inv.user_id,
-          p_amount: 0,
-          p_description: "daily_profit",
-        });
-        // Actually credit to main balance
         const { data: wallet } = await supabase
           .from("wallets")
           .select("balance")
           .eq("user_id", inv.user_id)
           .eq("currency", "USDT")
           .maybeSingle();
-        
+
         if (wallet) {
           await supabase
             .from("wallets")
@@ -100,7 +99,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Distribute referral commissions
+      // Distribute 20-level rebate commissions (based on downline's daily profit)
       const { data: profile } = await supabase
         .from("profiles")
         .select("referred_by")
@@ -109,9 +108,12 @@ Deno.serve(async (req) => {
 
       if (profile?.referred_by) {
         let currentReferralCode = profile.referred_by;
-        for (let level = 1; level <= 10; level++) {
-          const rate = commRates[level];
-          if (!rate || rate <= 0) break;
+        for (let level = 1; level <= 20; level++) {
+          const rebatePercent = commRates[level];
+          if (!rebatePercent || rebatePercent <= 0) {
+            if (level > 20) break;
+            continue;
+          }
 
           const { data: upline } = await supabase
             .from("profiles")
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
 
           if (!upline) break;
 
-          const commission = profitAmount * rate;
+          const commission = profitAmount * (rebatePercent / 100);
 
           // Insert commission record
           await supabase.from("commissions").insert({
@@ -129,8 +131,8 @@ Deno.serve(async (req) => {
             from_user_id: inv.user_id,
             amount: commission,
             level,
-            type: "referral",
-            description: `L${level} commission from daily profit`,
+            type: "rebate",
+            description: `L${level} rebate (${rebatePercent}%) from daily profit`,
           });
 
           // Credit commission to upline wallet
