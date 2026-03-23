@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ChangeUplineDialog } from "@/components/admin/ChangeUplineDialog";
 
-const DEFAULT_RATES = [5, 3, 2, 1, 0.5, 0.5, 0.3, 0.2, 0.1, 0.1];
+const DEFAULT_RATES = [10, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 
 const AdminReferral = () => {
   const { toast } = useToast();
@@ -103,22 +103,24 @@ const AdminReferral = () => {
             <p className="text-xs text-muted-foreground">Total Commissions</p>
             <p className="text-lg font-display font-bold text-foreground">${stats.totalCommissions.toFixed(2)}</p>
           </div>
-          <div className="glass-strong rounded-xl p-4">
+          <div className="glass-strong rounded-xl p-4 col-span-2 md:col-span-1">
             <GitBranch className="w-5 h-5 text-accent mb-2" />
-            <p className="text-xs text-muted-foreground">Commission Rates</p>
+            <p className="text-xs text-muted-foreground">Rebate Rates (20 Levels)</p>
             {editingRates ? (
               <div className="space-y-1 mt-1">
-                {rates.map((rate, i) => (
-                  <div key={i} className="flex items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground w-6">L{i + 1}:</span>
-                    <Input type="number" value={rate} onChange={e => {
-                      const newRates = [...rates];
-                      newRates[i] = Number(e.target.value);
-                      setRates(newRates);
-                    }} className="h-6 text-xs w-16" step="0.1" />
-                    <span className="text-[10px] text-muted-foreground">%</span>
-                  </div>
-                ))}
+                <div className="grid grid-cols-4 gap-1">
+                  {rates.map((rate, i) => (
+                    <div key={i} className="flex items-center gap-0.5">
+                      <span className="text-[9px] text-muted-foreground w-5">L{i + 1}</span>
+                      <Input type="number" value={rate} onChange={e => {
+                        const newRates = [...rates];
+                        newRates[i] = Number(e.target.value);
+                        setRates(newRates);
+                      }} className="h-6 text-xs w-14" step="0.1" />
+                      <span className="text-[9px] text-muted-foreground">%</span>
+                    </div>
+                  ))}
+                </div>
                 <div className="flex gap-1 mt-1">
                   <Button size="sm" onClick={handleSaveRates} disabled={savingRates} className="h-6 text-[10px] px-2">
                     <Save className="w-3 h-3 mr-1" /> Save
@@ -129,9 +131,9 @@ const AdminReferral = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-1 mt-1">
-                <p className="text-xs font-medium text-foreground">
-                  {rates.map((r, i) => `L${i + 1}: ${r}%`).join(" · ")}
+              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                <p className="text-[10px] font-medium text-foreground">
+                  L1: {rates[0]}% · L2-10: {rates[1]}% · L11-20: {rates[10] || 1}%
                 </p>
                 <button onClick={() => setEditingRates(true)} className="p-1 hover:bg-muted/50 rounded">
                   <Edit2 className="w-3 h-3 text-primary" />
@@ -169,7 +171,9 @@ const AdminReferral = () => {
               <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">{getUserName(c.user_id)}</p>
-                  <p className="text-[10px] text-muted-foreground">Level {c.level} · from {getUserName(c.from_user_id)}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {c.type === "rank_weekly" ? "Rank Weekly" : `Level ${c.level}`} · from {getUserName(c.from_user_id)}
+                  </p>
                 </div>
                 <p className="text-sm font-bold text-success">${Number(c.amount).toFixed(2)}</p>
               </div>

@@ -17,6 +17,8 @@ const Commissions = () => {
   }, [user]);
 
   const total = commissions.reduce((s, c) => s + Number(c.amount), 0);
+  const rebateTotal = commissions.filter(c => c.type === "rebate").reduce((s, c) => s + Number(c.amount), 0);
+  const rankTotal = commissions.filter(c => c.type === "rank_weekly").reduce((s, c) => s + Number(c.amount), 0);
 
   return (
     <DashboardLayout title="Commissions">
@@ -25,14 +27,24 @@ const Commissions = () => {
           <Wallet className="w-8 h-8 text-success mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">Total Commission Earned</p>
           <p className="text-3xl font-display font-bold text-success">${total.toFixed(2)}</p>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="bg-muted/50 rounded-xl p-2">
+              <p className="text-[10px] text-muted-foreground">Rebate (20 Level)</p>
+              <p className="text-sm font-bold text-foreground">${rebateTotal.toFixed(2)}</p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-2">
+              <p className="text-[10px] text-muted-foreground">Rank Weekly</p>
+              <p className="text-sm font-bold text-foreground">${rankTotal.toFixed(2)}</p>
+            </div>
+          </div>
         </motion.div>
 
-        {/* Level Breakdown */}
+        {/* Level Breakdown (20 levels) */}
         <div className="grid grid-cols-5 gap-2">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(level => {
+          {Array.from({ length: 20 }, (_, i) => i + 1).map(level => {
             const levelTotal = commissions.filter(c => c.level === level).reduce((s, c) => s + Number(c.amount), 0);
             return (
-              <div key={level} className="glass-strong rounded-xl p-2.5 text-center">
+              <div key={level} className="glass-strong rounded-xl p-2 text-center">
                 <p className="text-[10px] text-muted-foreground">Lv.{level}</p>
                 <p className="text-xs font-bold text-foreground">${levelTotal.toFixed(0)}</p>
               </div>
@@ -55,11 +67,12 @@ const Commissions = () => {
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <Calendar className="w-3 h-3" />
                     {new Date(c.created_at).toLocaleDateString()}
+                    {c.type && <span className="ml-1 px-1 py-0.5 rounded bg-muted text-[9px]">{c.type}</span>}
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-success">+${Number(c.amount).toFixed(2)}</p>
-                  <p className="text-[10px] text-muted-foreground">Level {c.level}</p>
+                  {c.level > 0 && <p className="text-[10px] text-muted-foreground">Level {c.level}</p>}
                 </div>
               </motion.div>
             ))}
