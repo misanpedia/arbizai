@@ -55,11 +55,13 @@ Deno.serve(async (req) => {
       throw new Error(`OxaPay API error [${response.status}]: ${errBody}`);
     }
 
-    const data = await response.json();
-    console.log("OxaPay invoice response:", JSON.stringify(data));
+    const rawData = await response.json();
+    console.log("OxaPay invoice response:", JSON.stringify(rawData));
 
-    if (!data.track_id) {
-      throw new Error(data.message || "Failed to create payment invoice");
+    const payload = rawData.data || rawData;
+
+    if (!payload.track_id) {
+      throw new Error(rawData.message || "Failed to create payment invoice");
     }
 
     // Create pending transaction
@@ -70,16 +72,16 @@ Deno.serve(async (req) => {
       currency: currency,
       status: "pending",
       description: `Deposit ${amount} ${currency} via OxaPay (${network})`,
-      tx_hash: data.track_id,
+      tx_hash: payload.track_id,
       network: network,
     });
 
     return new Response(
       JSON.stringify({
-        track_id: data.track_id,
-        payment_url: data.payment_url,
-        address: data.address,
-        expired_at: data.expired_at,
+        track_id: payload.track_id,
+        payment_url: payload.payment_url,
+        address: payload.address,
+        expired_at: payload.expired_at,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

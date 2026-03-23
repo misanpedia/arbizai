@@ -27,6 +27,7 @@ Deno.serve(async (req) => {
     if (authError || !user) throw new Error("Unauthorized");
 
     const OXAPAY_KEY = Deno.env.get("OXAPAY_MERCHANT_KEY");
+    console.log("OXAPAY_KEY length:", OXAPAY_KEY?.length, "first4:", OXAPAY_KEY?.substring(0, 4), "last4:", OXAPAY_KEY?.substring((OXAPAY_KEY?.length || 0) - 4));
     if (!OXAPAY_KEY) throw new Error("OxaPay Merchant Key not configured");
 
     const { network = "BSC", currency = "USDT" } = await req.json();
@@ -73,28 +74,32 @@ Deno.serve(async (req) => {
       throw new Error(`OxaPay API error [${response.status}]: ${errBody}`);
     }
 
-    const data = await response.json();
-    console.log("OxaPay static address response:", JSON.stringify(data));
+    const rawData = await response.json();
+    console.log("OxaPay static address response:", JSON.stringify(rawData));
 
-    if (!data.address) {
-      throw new Error(data.message || "Failed to create static address");
+    // OxaPay wraps response in { data: { address, track_id, ... }, status, message }
+    const payload = rawData.data || rawData;
+
+    if (!payload.address) {
+      throw new Error(rawData.message || "Failed to create static address");
     }
 
     // Save the static address
     await supabase.from("user_static_addresses").insert({
       user_id: user.id,
-      address: data.address,
+      address: payload.address,
       network: network,
       currency: currency,
-      track_id: data.track_id || null,
+      track_id: payload.track_id || null,
     });
 
     return new Response(
       JSON.stringify({
-        address: data.address,
-        network: data.network || network,
+        address: payload.address,
+        network: payload.network || network,
         currency: currency,
-        track_id: data.track_id,
+        track_id: payload.track_id,
+        qr_code: payload.qr_code,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
