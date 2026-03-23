@@ -7,24 +7,33 @@ const corsHeaders = {
 
 interface RankDef {
   name: string;
+  label: string;
   personalInvestment: number;
   referrals: number;
   volume: number;
   weeklyCommission: number;
 }
 
-const RANKS: RankDef[] = [
-  { name: "bronze",  personalInvestment: 100,  referrals: 5,   volume: 1000,    weeklyCommission: 10 },
-  { name: "silver",  personalInvestment: 200,  referrals: 10,  volume: 2500,    weeklyCommission: 20 },
-  { name: "gold",    personalInvestment: 250,  referrals: 15,  volume: 5000,    weeklyCommission: 50 },
-  { name: "diamond", personalInvestment: 500,  referrals: 30,  volume: 10000,   weeklyCommission: 100 },
-  { name: "emerald", personalInvestment: 1000, referrals: 60,  volume: 25000,   weeklyCommission: 250 },
-  { name: "ruby",    personalInvestment: 1500, referrals: 100, volume: 50000,   weeklyCommission: 500 },
-  { name: "crown",   personalInvestment: 2000, referrals: 200, volume: 100000,  weeklyCommission: 1000 },
-  { name: "legend",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
+const DEFAULT_RANKS: RankDef[] = [
+  { name: "bronze",  label: "Bronze",  personalInvestment: 100,  referrals: 5,   volume: 1000,    weeklyCommission: 10 },
+  { name: "silver",  label: "Silver",  personalInvestment: 200,  referrals: 10,  volume: 2500,    weeklyCommission: 20 },
+  { name: "gold",    label: "Gold",    personalInvestment: 250,  referrals: 15,  volume: 5000,    weeklyCommission: 50 },
+  { name: "diamond", label: "Diamond", personalInvestment: 500,  referrals: 30,  volume: 10000,   weeklyCommission: 100 },
+  { name: "emerald", label: "Emerald", personalInvestment: 1000, referrals: 60,  volume: 25000,   weeklyCommission: 250 },
+  { name: "ruby",    label: "Ruby",    personalInvestment: 1500, referrals: 100, volume: 50000,   weeklyCommission: 500 },
+  { name: "crown",   label: "Crown",   personalInvestment: 2000, referrals: 200, volume: 100000,  weeklyCommission: 1000 },
+  { name: "legend",  label: "Legend",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
 ];
 
-const RANK_ORDER = RANKS.map(r => r.name);
+async function loadRanks(supabase: any): Promise<RankDef[]> {
+  const { data } = await supabase
+    .from("system_settings")
+    .select("value")
+    .eq("key", "rank_config")
+    .maybeSingle();
+  if (data?.value && Array.isArray(data.value)) return data.value as RankDef[];
+  return DEFAULT_RANKS;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,6 +44,9 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const RANKS = await loadRanks(supabase);
+    const RANK_ORDER = RANKS.map(r => r.name);
 
     // Get all active profiles
     const { data: profiles, error: profErr } = await supabase
@@ -104,10 +116,11 @@ Deno.serve(async (req) => {
           .update({ rank: newRank })
           .eq("user_id", profile.user_id);
 
+        const rankLabel = RANKS.find(r => r.name === newRank)?.label || newRank;
         await supabase.from("notifications").insert({
           user_id: profile.user_id,
           title: "🎉 Rank Upgraded!",
-          message: `Congratulations! You've been promoted to ${newRank.charAt(0).toUpperCase() + newRank.slice(1)} rank.`,
+          message: `Congratulations! You've been promoted to ${rankLabel} rank.`,
           type: "success",
         });
 
