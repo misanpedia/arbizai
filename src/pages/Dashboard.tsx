@@ -236,6 +236,7 @@ function ArbitrageScanner() {
         <div className="flex items-center gap-2">
           <Cpu className="w-5 h-5 text-primary animate-pulse" />
           <span className="text-sm font-medium text-foreground">AI Engine Active</span>
+          <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-success border-0">● Live</Badge>
         </div>
         <div className="flex items-center gap-1.5">
           <Wifi className="w-4 h-4 text-success" />
