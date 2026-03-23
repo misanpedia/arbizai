@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     const { data: settingsData } = await supabase
       .from("system_settings")
       .select("key, value")
-      .in("key", ["withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount", "withdrawal_enabled", "withdrawal_cooldown_hours", "withdrawal_penalty_tiers"]);
+      .in("key", ["withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount", "withdrawal_enabled", "withdrawal_cooldown_hours", "withdrawal_principal_penalty_rate"]);
 
     const settings: Record<string, any> = {};
     settingsData?.forEach((s: any) => { settings[s.key] = s.value; });
