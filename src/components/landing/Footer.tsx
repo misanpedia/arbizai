@@ -21,7 +21,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
           <div>
             <img src={logo} alt="Arbiz AI" className="h-8 mb-3" />
             <p className="text-sm text-muted-foreground">AI-powered crypto arbitrage automation platform.</p>

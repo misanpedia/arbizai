@@ -79,9 +79,9 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-balance"
+            className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-pretty px-2"
           >
-            Our AI engine scans 50+ exchanges in real-time, detects price spreads, and executes profitable arbitrage trades automatically. Start with as little as $5.
+            Our AI engine scans 50+ exchanges in real-time, detects price spreads, and executes profitable arbitrage trades automatically. Start with as little as $10.
           </motion.p>
 
           <motion.div
@@ -103,17 +103,17 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="grid grid-cols-3 gap-6 mt-16 max-w-2xl mx-auto"
+            className="grid grid-cols-3 gap-3 md:gap-6 mt-12 md:mt-16 max-w-2xl mx-auto"
           >
             {[
               { label: "Total Volume", value: "$128M+", icon: TrendingUp },
               { label: "Active Traders", value: "24,500+", icon: Zap },
               { label: "Uptime", value: "99.97%", icon: Shield },
             ].map((stat) => (
-              <div key={stat.label} className="glass rounded-xl p-4">
-                <stat.icon className="w-5 h-5 text-primary mx-auto mb-2" />
-                <div className="font-display font-bold text-xl md:text-2xl">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
+              <div key={stat.label} className="glass rounded-xl p-3 md:p-4">
+                <stat.icon className="w-4 h-4 md:w-5 md:h-5 text-primary mx-auto mb-1.5 md:mb-2" />
+                <div className="font-display font-bold text-lg md:text-2xl">{stat.value}</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </motion.div>

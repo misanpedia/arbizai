@@ -8,7 +8,7 @@ const faqs = [
   },
   {
     q: "What is the minimum investment amount?",
-    a: "You can start investing with as little as $5 on our Basic plan. Higher-tier plans offer greater daily return ranges.",
+    a: "You can start investing with as little as $10 on our Spatial Arbitrage plan. Higher-tier plans offer greater daily return ranges.",
   },
   {
     q: "Are my funds safe?",
