@@ -183,27 +183,14 @@ const AdminWithdrawalSettings = () => {
           </div>
         </div>
 
-        {/* Penalty Tiers */}
+        {/* Principal Penalty */}
         <div className="glass-strong rounded-2xl p-5 space-y-4">
-          <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><Percent className="w-4 h-4 text-destructive" /> Principal Withdrawal Penalty Tiers</h3>
-          <p className="text-[10px] text-muted-foreground">Penalty rates based on how long the member has been investing. Only applies to principal/deposit withdrawals.</p>
-
-          <div className="space-y-2">
-            {config.penalty_tiers.map((tier, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <div className="flex-1">
-                  <label className="text-[10px] text-muted-foreground">After (days)</label>
-                  <Input type="number" value={tier.days} onChange={e => updateTier(idx, "days", Number(e.target.value))} />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[10px] text-muted-foreground">Penalty Rate (%)</label>
-                  <Input type="number" step="0.1" value={(tier.rate * 100).toFixed(1)} onChange={e => updateTier(idx, "rate", Number(e.target.value) / 100)} />
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => removeTier(idx)} className="text-destructive hover:bg-destructive/10 mt-4 text-xs">✕</Button>
-              </div>
-            ))}
+          <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><Percent className="w-4 h-4 text-destructive" /> Principal Withdrawal Penalty</h3>
+          <p className="text-[10px] text-muted-foreground">Flat penalty rate applied to all principal/deposit withdrawals regardless of time.</p>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Penalty Rate (%)</label>
+            <Input type="number" step="0.1" value={(config.principal_penalty_rate * 100).toFixed(1)} onChange={e => setConfig({ ...config, principal_penalty_rate: Number(e.target.value) / 100 })} className="max-w-xs" />
           </div>
-          <Button variant="outline" size="sm" onClick={addTier} className="text-xs">+ Add Tier</Button>
         </div>
 
         {/* Save */}
