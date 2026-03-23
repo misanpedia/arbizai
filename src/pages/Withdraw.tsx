@@ -50,7 +50,7 @@ const Withdraw = () => {
       .select("key, value")
       .in("key", [
         "withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount",
-        "withdrawal_enabled", "withdrawal_cooldown_hours", "withdrawal_penalty_tiers",
+        "withdrawal_enabled", "withdrawal_cooldown_hours", "withdrawal_principal_penalty_rate",
       ])
       .then(({ data }) => {
         if (data) {
