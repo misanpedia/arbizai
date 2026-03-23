@@ -103,7 +103,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="grid grid-cols-3 gap-6 mt-16 max-w-2xl mx-auto"
+            className="grid grid-cols-3 gap-3 md:gap-6 mt-12 md:mt-16 max-w-2xl mx-auto"
           >
             {[
               { label: "Total Volume", value: "$128M+", icon: TrendingUp },
