@@ -47,7 +47,7 @@ const AdminWithdrawalSettings = () => {
     const { data } = await supabase.from("system_settings").select("key, value").in("key", [
       "withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount",
       "withdrawal_enabled", "withdrawal_notify_admin", "withdrawal_auto_approve",
-      "withdrawal_auto_approve_limit", "withdrawal_cooldown_hours", "withdrawal_penalty_tiers",
+      "withdrawal_auto_approve_limit", "withdrawal_cooldown_hours", "withdrawal_principal_penalty_rate",
     ]);
     if (data && data.length > 0) {
       const map: Record<string, any> = {};
