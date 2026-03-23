@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import { DefiActivityFeed } from "@/components/dashboard/DefiActivityFeed";
+import { Badge } from "@/components/ui/badge";
 
 interface WalletData {
   currency: string;
