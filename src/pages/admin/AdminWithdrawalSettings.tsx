@@ -16,7 +16,7 @@ interface WithdrawalConfig {
   withdrawal_auto_approve: boolean;
   withdrawal_auto_approve_limit: number;
   withdrawal_cooldown_hours: number;
-  penalty_tiers: { days: number; rate: number }[];
+  principal_penalty_rate: number;
 }
 
 const defaultConfig: WithdrawalConfig = {
@@ -28,13 +28,7 @@ const defaultConfig: WithdrawalConfig = {
   withdrawal_auto_approve: false,
   withdrawal_auto_approve_limit: 100,
   withdrawal_cooldown_hours: 24,
-  penalty_tiers: [
-    { days: 0, rate: 0.30 },
-    { days: 60, rate: 0.20 },
-    { days: 90, rate: 0.10 },
-    { days: 120, rate: 0.05 },
-    { days: 150, rate: 0.02 },
-  ],
+  principal_penalty_rate: 0.10,
 };
 
 const AdminWithdrawalSettings = () => {
