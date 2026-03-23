@@ -26,7 +26,7 @@ const Withdraw = () => {
   const [walletAddress, setWalletAddress] = useState("");
   const [balance, setBalance] = useState(0);
   const [bonusBalance, setBonusBalance] = useState(0);
-  const [penaltyRate, setPenaltyRate] = useState(0);
+  const [penaltyRate, setPenaltyRate] = useState(0.10);
   const [loading, setLoading] = useState(false);
   const [withdrawType, setWithdrawType] = useState<WithdrawType>("profit");
   const [totalProfit, setTotalProfit] = useState(0);
