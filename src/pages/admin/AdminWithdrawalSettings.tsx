@@ -103,20 +103,7 @@ const AdminWithdrawalSettings = () => {
     setSaving(false);
   };
 
-  const updateTier = (idx: number, field: "days" | "rate", val: number) => {
-    const tiers = [...config.penalty_tiers];
-    tiers[idx] = { ...tiers[idx], [field]: val };
-    setConfig({ ...config, penalty_tiers: tiers });
-  };
 
-  const addTier = () => {
-    const last = config.penalty_tiers[config.penalty_tiers.length - 1];
-    setConfig({ ...config, penalty_tiers: [...config.penalty_tiers, { days: (last?.days || 0) + 30, rate: 0.01 }] });
-  };
-
-  const removeTier = (idx: number) => {
-    setConfig({ ...config, penalty_tiers: config.penalty_tiers.filter((_, i) => i !== idx) });
-  };
 
   if (loading) return <AdminLayout title="Withdrawal Settings"><div className="flex items-center justify-center py-20"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div></AdminLayout>;
 
