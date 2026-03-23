@@ -63,6 +63,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import SecurityPage from "./pages/SecurityPage";
 import Announcements from "./pages/Announcements";
 import ProfitCalculator from "./pages/ProfitCalculator";
+import ProfitHistory from "./pages/ProfitHistory";
 import AdminLogin from "./pages/AdminLogin";
 
 const queryClient = new QueryClient();
