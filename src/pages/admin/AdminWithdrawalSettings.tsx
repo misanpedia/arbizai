@@ -91,7 +91,7 @@ const AdminWithdrawalSettings = () => {
       { key: "withdrawal_auto_approve", value: config.withdrawal_auto_approve },
       { key: "withdrawal_auto_approve_limit", value: config.withdrawal_auto_approve_limit },
       { key: "withdrawal_cooldown_hours", value: config.withdrawal_cooldown_hours },
-      { key: "withdrawal_penalty_tiers", value: config.penalty_tiers },
+      { key: "withdrawal_principal_penalty_rate", value: config.principal_penalty_rate },
     ];
     for (const s of settings) {
       await supabase.from("system_settings").upsert(
