@@ -125,18 +125,7 @@ const Withdraw = () => {
     return `${hours}h ${mins}m`;
   })();
 
-  // Build penalty tier labels from admin settings
-  const sortedTiers = [...penaltyTiers].sort((a, b) => a.days - b.days);
-  const tierLabels = sortedTiers.map((tier, idx) => {
-    const nextTier = sortedTiers[idx + 1];
-    let label: string;
-    if (idx === sortedTiers.length - 1) {
-      label = `≥ ${tier.days} days`;
-    } else {
-      label = tier.days === 0 ? `< ${nextTier.days} days` : `${tier.days}–${nextTier.days - 1} days`;
-    }
-    return { label, rate: tier.rate, rateLabel: `${(tier.rate * 100).toFixed(0)}%` };
-  });
+
 
   const handleSubmit = async () => {
     if (!user || !amount || !walletAddress) return;
