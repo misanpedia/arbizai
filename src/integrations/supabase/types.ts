@@ -558,6 +558,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_static_addresses: {
+        Row: {
+          address: string
+          created_at: string | null
+          currency: string
+          id: string
+          network: string
+          track_id: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          network?: string
+          track_id?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          network?: string
+          track_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallets: {
         Row: {
           balance: number | null
