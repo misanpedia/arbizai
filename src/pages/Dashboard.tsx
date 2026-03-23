@@ -7,7 +7,7 @@ import {
   Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp,
   Users, Award, BarChart3, LogOut,
   Activity, Cpu, Wifi, ShieldCheck, Shield, Coins, Bell,
-  Zap, History
+  Zap, History, Headphones
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NotificationCenter } from "@/components/NotificationCenter";
@@ -104,6 +104,7 @@ const Dashboard = () => {
     { icon: Zap, label: "Lucky Spin", color: "text-primary", path: "/spin" },
     { icon: Activity, label: "Check-in", color: "text-success", path: "/checkin" },
     { icon: History, label: "History", color: "text-muted-foreground", path: "/history" },
+    { icon: Headphones, label: "Support", color: "text-warning", path: "/support" },
   ];
 
   return (

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User, Phone, Copy, Shield, Award, Mail, Calendar, Users, TrendingUp, Wallet, Zap, Activity, Cpu, ShieldCheck, Trophy, Calculator, Megaphone, BarChart3 } from "lucide-react";
+import { User, Phone, Copy, Shield, Award, Mail, Calendar, Users, TrendingUp, Wallet, Zap, Activity, Cpu, ShieldCheck, Trophy, Calculator, Megaphone, BarChart3, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -78,7 +78,7 @@ const Profile = () => {
     { icon: BarChart3, label: "Profit Log", color: "text-warning", path: "/profit-history" },
     { icon: Megaphone, label: "News", color: "text-primary", path: "/announcements" },
     { icon: Cpu, label: "Education", color: "text-accent", path: "/education" },
-    { icon: ShieldCheck, label: "Support", color: "text-warning", path: "/support" },
+    { icon: Lock, label: "Security", color: "text-warning", path: "/security-info" },
   ];
 
   return (
@@ -152,19 +152,11 @@ const Profile = () => {
           <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary" /> Account Details
           </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-muted/50 rounded-xl p-3">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">KYC Status</p>
-              <Link to="/kyc" className={`text-sm font-medium capitalize underline decoration-dotted ${profile?.kyc_status === "verified" ? "text-success" : "text-warning"}`}>
-                {profile?.kyc_status || "unverified"} →
-              </Link>
-            </div>
-            <div className="bg-muted/50 rounded-xl p-3">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Member Since</p>
-              <p className="text-sm font-medium text-foreground">
-                {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "—"}
-              </p>
-            </div>
+          <div className="bg-muted/50 rounded-xl p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Member Since</p>
+            <p className="text-sm font-medium text-foreground">
+              {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "—"}
+            </p>
           </div>
         </motion.div>
 
