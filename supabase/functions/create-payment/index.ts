@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RAZCRYPTO_API = "https://razcryptogateway.com/api/v2";
+const OXAPAY_API = "https://api.oxapay.com/v1";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -26,65 +26,60 @@ Deno.serve(async (req) => {
     );
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { amount, chain = "BSC", currency = "USDT" } = await req.json();
+    const OXAPAY_KEY = Deno.env.get("OXAPAY_MERCHANT_KEY");
+    if (!OXAPAY_KEY) throw new Error("OxaPay Merchant Key not configured");
+
+    const { amount, currency = "USDT", network = "BSC" } = await req.json();
     if (!amount || amount <= 0) throw new Error("Invalid amount");
 
-    const RAZ_PUBLIC_KEY = Deno.env.get("RAZ_PUBLIC_KEY");
-    if (!RAZ_PUBLIC_KEY) throw new Error("RazCrypto Public Key not configured");
-
-    // Create RazCrypto payment
-    const response = await fetch(`${RAZCRYPTO_API}/payments/create`, {
+    // Create OxaPay invoice
+    const response = await fetch(`${OXAPAY_API}/payment/invoice`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-Public-Key-Id": RAZ_PUBLIC_KEY,
+        "merchant_api_key": OXAPAY_KEY,
       },
       body: JSON.stringify({
-        amount,
-        chain,
-        currency,
-        email: user.email || "",
-        callback_url: `${supabaseUrl}/functions/v1/razcrypto-webhook`,
-        return_json: "true",
-        custom_data: {
-          user_id: user.id,
-          timestamp: Date.now(),
-        },
+        amount: parseFloat(amount),
+        currency: currency,
+        network: network,
+        callback_url: `${supabaseUrl}/functions/v1/oxapay-webhook`,
+        description: `Deposit ${amount} ${currency} for user`,
+        order_id: `${user.id}_${Date.now()}`,
+        auto_withdrawal: 0,
       }),
     });
 
     if (!response.ok) {
       const errBody = await response.text();
-      throw new Error(`RazCrypto API error [${response.status}]: ${errBody}`);
+      throw new Error(`OxaPay API error [${response.status}]: ${errBody}`);
     }
 
     const data = await response.json();
+    console.log("OxaPay invoice response:", JSON.stringify(data));
 
-    if (data.status !== "success") {
-      throw new Error(data.message || "Failed to create payment");
+    if (!data.track_id) {
+      throw new Error(data.message || "Failed to create payment invoice");
     }
 
     // Create pending transaction
     await supabase.from("transactions").insert({
       user_id: user.id,
       type: "deposit",
-      amount: data.amount || amount,
+      amount: parseFloat(amount),
       currency: currency,
       status: "pending",
-      description: `Deposit ${amount} ${currency} via RazCrypto (${chain})`,
-      tx_hash: data.payment_id || null,
-      network: chain,
+      description: `Deposit ${amount} ${currency} via OxaPay (${network})`,
+      tx_hash: data.track_id,
+      network: network,
     });
 
     return new Response(
       JSON.stringify({
-        checkout_url: data.checkout_page || data.hosted_page || data.payment_page,
-        payment_id: data.payment_id,
-        amount: data.amount,
+        track_id: data.track_id,
+        payment_url: data.payment_url,
         address: data.address,
-        qr_code: data.qr_code || data.qr_url,
-        expiry_minutes: data.expiry_minutes,
+        expired_at: data.expired_at,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
