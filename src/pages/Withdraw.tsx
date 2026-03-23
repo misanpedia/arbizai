@@ -39,13 +39,7 @@ const Withdraw = () => {
   const [minAmount, setMinAmount] = useState(10);
   const [maxAmount, setMaxAmount] = useState(50000);
   const [cooldownHours, setCooldownHours] = useState(24);
-  const [penaltyTiers, setPenaltyTiers] = useState<PenaltyTier[]>([
-    { days: 0, rate: 0.30 },
-    { days: 60, rate: 0.20 },
-    { days: 90, rate: 0.10 },
-    { days: 120, rate: 0.05 },
-    { days: 150, rate: 0.02 },
-  ]);
+  const [principalPenaltyRate, setPrincipalPenaltyRate] = useState(0.10);
   const [lastWithdrawAt, setLastWithdrawAt] = useState<string | null>(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 

@@ -65,32 +65,7 @@ Deno.serve(async (req) => {
     let penalty = 0;
 
     if (withdraw_type === "principal") {
-      const penaltyTiers = settings.withdrawal_penalty_tiers || [
-        { days: 0, rate: 0.30 }, { days: 60, rate: 0.20 }, { days: 90, rate: 0.10 },
-        { days: 120, rate: 0.05 }, { days: 150, rate: 0.02 },
-      ];
-
-      const { data: firstDeposit } = await supabase
-        .from("transactions")
-        .select("created_at")
-        .eq("user_id", user.id)
-        .eq("type", "deposit")
-        .in("status", ["approved", "completed"])
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      let penaltyRate = 0.30;
-      if (firstDeposit) {
-        const daysSince = Math.floor((Date.now() - new Date(firstDeposit.created_at).getTime()) / (1000 * 60 * 60 * 24));
-        const sorted = [...penaltyTiers].sort((a: any, b: any) => b.days - a.days);
-        for (const tier of sorted) {
-          if (daysSince >= (tier as any).days) {
-            penaltyRate = (tier as any).rate;
-            break;
-          }
-        }
-      }
+      const penaltyRate = Number(settings.withdrawal_principal_penalty_rate || 0.10);
       penalty = amount * penaltyRate;
     }
 
