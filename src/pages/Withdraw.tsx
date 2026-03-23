@@ -253,7 +253,7 @@ const Withdraw = () => {
           <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
             {isPrincipal
-              ? `Principal deposit withdrawal is subject to a ${(feeRate * 100).toFixed(0)}% fee + penalty based on the duration since your first deposit.`
+              ? `Principal deposit withdrawal is subject to a ${(feeRate * 100).toFixed(0)}% fee + ${(penaltyRate * 100).toFixed(0)}% penalty.`
               : `Profit and commission withdrawals are only subject to a ${(feeRate * 100).toFixed(0)}% fee. No penalty.`}
           </p>
         </div>
@@ -265,19 +265,10 @@ const Withdraw = () => {
               <Clock className="w-4 h-4 text-warning" />
               <span>Principal Withdrawal Penalty</span>
             </div>
-            <div className={`grid gap-1`} style={{ gridTemplateColumns: `repeat(${tierLabels.length}, 1fr)` }}>
-              {tierLabels.map((tier, i) => (
-                <div key={i} className={`text-center p-1.5 rounded-lg text-[10px] ${
-                  penaltyRate === tier.rate
-                    ? "bg-warning/20 text-warning font-bold border border-warning/30"
-                    : "bg-muted/30 text-muted-foreground"
-                }`}>
-                  <p className="font-mono font-bold">{tier.rateLabel}</p>
-                  <p>{tier.label}</p>
-                </div>
-              ))}
+            <div className="text-center p-3 rounded-lg bg-warning/20 text-warning font-bold border border-warning/30">
+              <p className="font-mono text-lg">{(penaltyRate * 100).toFixed(0)}%</p>
+              <p className="text-[10px]">Flat penalty rate</p>
             </div>
-            <p className="text-[10px] text-muted-foreground">Current penalty: <span className="text-warning font-bold">{(penaltyRate * 100).toFixed(0)}%</span></p>
           </div>
         )}
 
