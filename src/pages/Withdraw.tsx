@@ -13,10 +13,7 @@ const NETWORKS = ["BEP20", "TRC20", "ERC20"];
 
 type WithdrawType = "profit" | "principal";
 
-interface PenaltyTier {
-  days: number;
-  rate: number;
-}
+
 
 const Withdraw = () => {
   const { user } = useAuth();
@@ -26,7 +23,7 @@ const Withdraw = () => {
   const [walletAddress, setWalletAddress] = useState("");
   const [balance, setBalance] = useState(0);
   const [bonusBalance, setBonusBalance] = useState(0);
-  const [penaltyRate, setPenaltyRate] = useState(0);
+  const [penaltyRate, setPenaltyRate] = useState(0.10);
   const [loading, setLoading] = useState(false);
   const [withdrawType, setWithdrawType] = useState<WithdrawType>("profit");
   const [totalProfit, setTotalProfit] = useState(0);
@@ -39,13 +36,7 @@ const Withdraw = () => {
   const [minAmount, setMinAmount] = useState(10);
   const [maxAmount, setMaxAmount] = useState(50000);
   const [cooldownHours, setCooldownHours] = useState(24);
-  const [penaltyTiers, setPenaltyTiers] = useState<PenaltyTier[]>([
-    { days: 0, rate: 0.30 },
-    { days: 60, rate: 0.20 },
-    { days: 90, rate: 0.10 },
-    { days: 120, rate: 0.05 },
-    { days: 150, rate: 0.02 },
-  ]);
+  const [principalPenaltyRate, setPrincipalPenaltyRate] = useState(0.10);
   const [lastWithdrawAt, setLastWithdrawAt] = useState<string | null>(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -56,7 +47,7 @@ const Withdraw = () => {
       .select("key, value")
       .in("key", [
         "withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount",
-        "withdrawal_enabled", "withdrawal_cooldown_hours", "withdrawal_penalty_tiers",
+        "withdrawal_enabled", "withdrawal_cooldown_hours", "withdrawal_principal_penalty_rate",
       ])
       .then(({ data }) => {
         if (data) {
@@ -67,9 +58,7 @@ const Withdraw = () => {
           if (map.withdrawal_min_amount !== undefined) setMinAmount(Number(map.withdrawal_min_amount));
           if (map.withdrawal_max_amount !== undefined) setMaxAmount(Number(map.withdrawal_max_amount));
           if (map.withdrawal_cooldown_hours !== undefined) setCooldownHours(Number(map.withdrawal_cooldown_hours));
-          if (map.withdrawal_penalty_tiers && Array.isArray(map.withdrawal_penalty_tiers)) {
-            setPenaltyTiers(map.withdrawal_penalty_tiers);
-          }
+          if (map.withdrawal_principal_penalty_rate !== undefined) setPrincipalPenaltyRate(Number(map.withdrawal_principal_penalty_rate));
         }
         setSettingsLoaded(true);
       });
@@ -98,24 +87,9 @@ const Withdraw = () => {
       if (lastWdRes.data && lastWdRes.data.length > 0) {
         setLastWithdrawAt(lastWdRes.data[0].created_at);
       }
-      // Calculate penalty rate from admin tiers + first deposit
-      if (firstDepositRes.data && firstDepositRes.data.length > 0) {
-        const daysSince = Math.floor((Date.now() - new Date(firstDepositRes.data[0].created_at).getTime()) / (1000 * 60 * 60 * 24));
-        const sorted = [...penaltyTiers].sort((a, b) => b.days - a.days);
-        let rate = sorted.length > 0 ? sorted[sorted.length - 1].rate : 0.30;
-        for (const tier of sorted) {
-          if (daysSince >= tier.days) {
-            rate = tier.rate;
-            break;
-          }
-        }
-        setPenaltyRate(rate);
-      } else {
-        const sorted = [...penaltyTiers].sort((a, b) => a.days - b.days);
-        setPenaltyRate(sorted[0]?.rate ?? 0.30);
-      }
+      setPenaltyRate(principalPenaltyRate);
     });
-  }, [user, penaltyTiers]);
+  }, [user, principalPenaltyRate]);
 
   const profitCommissionBalance = totalProfit + totalCommission;
   const amt = parseFloat(amount || "0");
@@ -148,18 +122,7 @@ const Withdraw = () => {
     return `${hours}h ${mins}m`;
   })();
 
-  // Build penalty tier labels from admin settings
-  const sortedTiers = [...penaltyTiers].sort((a, b) => a.days - b.days);
-  const tierLabels = sortedTiers.map((tier, idx) => {
-    const nextTier = sortedTiers[idx + 1];
-    let label: string;
-    if (idx === sortedTiers.length - 1) {
-      label = `≥ ${tier.days} days`;
-    } else {
-      label = tier.days === 0 ? `< ${nextTier.days} days` : `${tier.days}–${nextTier.days - 1} days`;
-    }
-    return { label, rate: tier.rate, rateLabel: `${(tier.rate * 100).toFixed(0)}%` };
-  });
+
 
   const handleSubmit = async () => {
     if (!user || !amount || !walletAddress) return;
@@ -287,7 +250,7 @@ const Withdraw = () => {
           <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
             {isPrincipal
-              ? `Principal deposit withdrawal is subject to a ${(feeRate * 100).toFixed(0)}% fee + penalty based on the duration since your first deposit.`
+              ? `Principal deposit withdrawal is subject to a ${(feeRate * 100).toFixed(0)}% fee + ${(penaltyRate * 100).toFixed(0)}% penalty.`
               : `Profit and commission withdrawals are only subject to a ${(feeRate * 100).toFixed(0)}% fee. No penalty.`}
           </p>
         </div>
@@ -299,19 +262,10 @@ const Withdraw = () => {
               <Clock className="w-4 h-4 text-warning" />
               <span>Principal Withdrawal Penalty</span>
             </div>
-            <div className={`grid gap-1`} style={{ gridTemplateColumns: `repeat(${tierLabels.length}, 1fr)` }}>
-              {tierLabels.map((tier, i) => (
-                <div key={i} className={`text-center p-1.5 rounded-lg text-[10px] ${
-                  penaltyRate === tier.rate
-                    ? "bg-warning/20 text-warning font-bold border border-warning/30"
-                    : "bg-muted/30 text-muted-foreground"
-                }`}>
-                  <p className="font-mono font-bold">{tier.rateLabel}</p>
-                  <p>{tier.label}</p>
-                </div>
-              ))}
+            <div className="text-center p-3 rounded-lg bg-warning/20 text-warning font-bold border border-warning/30">
+              <p className="font-mono text-lg">{(penaltyRate * 100).toFixed(0)}%</p>
+              <p className="text-[10px]">Flat penalty rate</p>
             </div>
-            <p className="text-[10px] text-muted-foreground">Current penalty: <span className="text-warning font-bold">{(penaltyRate * 100).toFixed(0)}%</span></p>
           </div>
         )}
 

@@ -16,7 +16,7 @@ interface WithdrawalConfig {
   withdrawal_auto_approve: boolean;
   withdrawal_auto_approve_limit: number;
   withdrawal_cooldown_hours: number;
-  penalty_tiers: { days: number; rate: number }[];
+  principal_penalty_rate: number;
 }
 
 const defaultConfig: WithdrawalConfig = {
@@ -28,13 +28,7 @@ const defaultConfig: WithdrawalConfig = {
   withdrawal_auto_approve: false,
   withdrawal_auto_approve_limit: 100,
   withdrawal_cooldown_hours: 24,
-  penalty_tiers: [
-    { days: 0, rate: 0.30 },
-    { days: 60, rate: 0.20 },
-    { days: 90, rate: 0.10 },
-    { days: 120, rate: 0.05 },
-    { days: 150, rate: 0.02 },
-  ],
+  principal_penalty_rate: 0.10,
 };
 
 const AdminWithdrawalSettings = () => {
@@ -53,7 +47,7 @@ const AdminWithdrawalSettings = () => {
     const { data } = await supabase.from("system_settings").select("key, value").in("key", [
       "withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount",
       "withdrawal_enabled", "withdrawal_notify_admin", "withdrawal_auto_approve",
-      "withdrawal_auto_approve_limit", "withdrawal_cooldown_hours", "withdrawal_penalty_tiers",
+      "withdrawal_auto_approve_limit", "withdrawal_cooldown_hours", "withdrawal_principal_penalty_rate",
     ]);
     if (data && data.length > 0) {
       const map: Record<string, any> = {};
@@ -67,7 +61,7 @@ const AdminWithdrawalSettings = () => {
         withdrawal_auto_approve: map.withdrawal_auto_approve ?? defaultConfig.withdrawal_auto_approve,
         withdrawal_auto_approve_limit: map.withdrawal_auto_approve_limit ?? defaultConfig.withdrawal_auto_approve_limit,
         withdrawal_cooldown_hours: map.withdrawal_cooldown_hours ?? defaultConfig.withdrawal_cooldown_hours,
-        penalty_tiers: map.withdrawal_penalty_tiers ?? defaultConfig.penalty_tiers,
+        principal_penalty_rate: map.withdrawal_principal_penalty_rate ?? defaultConfig.principal_penalty_rate,
       });
     }
     setLoading(false);
@@ -97,7 +91,7 @@ const AdminWithdrawalSettings = () => {
       { key: "withdrawal_auto_approve", value: config.withdrawal_auto_approve },
       { key: "withdrawal_auto_approve_limit", value: config.withdrawal_auto_approve_limit },
       { key: "withdrawal_cooldown_hours", value: config.withdrawal_cooldown_hours },
-      { key: "withdrawal_penalty_tiers", value: config.penalty_tiers },
+      { key: "withdrawal_principal_penalty_rate", value: config.principal_penalty_rate },
     ];
     for (const s of settings) {
       await supabase.from("system_settings").upsert(
@@ -109,20 +103,7 @@ const AdminWithdrawalSettings = () => {
     setSaving(false);
   };
 
-  const updateTier = (idx: number, field: "days" | "rate", val: number) => {
-    const tiers = [...config.penalty_tiers];
-    tiers[idx] = { ...tiers[idx], [field]: val };
-    setConfig({ ...config, penalty_tiers: tiers });
-  };
 
-  const addTier = () => {
-    const last = config.penalty_tiers[config.penalty_tiers.length - 1];
-    setConfig({ ...config, penalty_tiers: [...config.penalty_tiers, { days: (last?.days || 0) + 30, rate: 0.01 }] });
-  };
-
-  const removeTier = (idx: number) => {
-    setConfig({ ...config, penalty_tiers: config.penalty_tiers.filter((_, i) => i !== idx) });
-  };
 
   if (loading) return <AdminLayout title="Withdrawal Settings"><div className="flex items-center justify-center py-20"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div></AdminLayout>;
 
@@ -202,27 +183,14 @@ const AdminWithdrawalSettings = () => {
           </div>
         </div>
 
-        {/* Penalty Tiers */}
+        {/* Principal Penalty */}
         <div className="glass-strong rounded-2xl p-5 space-y-4">
-          <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><Percent className="w-4 h-4 text-destructive" /> Principal Withdrawal Penalty Tiers</h3>
-          <p className="text-[10px] text-muted-foreground">Penalty rates based on how long the member has been investing. Only applies to principal/deposit withdrawals.</p>
-
-          <div className="space-y-2">
-            {config.penalty_tiers.map((tier, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <div className="flex-1">
-                  <label className="text-[10px] text-muted-foreground">After (days)</label>
-                  <Input type="number" value={tier.days} onChange={e => updateTier(idx, "days", Number(e.target.value))} />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[10px] text-muted-foreground">Penalty Rate (%)</label>
-                  <Input type="number" step="0.1" value={(tier.rate * 100).toFixed(1)} onChange={e => updateTier(idx, "rate", Number(e.target.value) / 100)} />
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => removeTier(idx)} className="text-destructive hover:bg-destructive/10 mt-4 text-xs">✕</Button>
-              </div>
-            ))}
+          <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><Percent className="w-4 h-4 text-destructive" /> Principal Withdrawal Penalty</h3>
+          <p className="text-[10px] text-muted-foreground">Flat penalty rate applied to all principal/deposit withdrawals regardless of time.</p>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Penalty Rate (%)</label>
+            <Input type="number" step="0.1" value={(config.principal_penalty_rate * 100).toFixed(1)} onChange={e => setConfig({ ...config, principal_penalty_rate: Number(e.target.value) / 100 })} className="max-w-xs" />
           </div>
-          <Button variant="outline" size="sm" onClick={addTier} className="text-xs">+ Add Tier</Button>
         </div>
 
         {/* Save */}
