@@ -2,40 +2,49 @@ import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Award, Star, Shield, Gem, Crown, Sparkles } from "lucide-react";
+import { Award, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface RankInfo {
   name: string;
   label: string;
-  color: string;
   personalInvestment: number;
   referrals: number;
   volume: number;
   weeklyCommission: number;
 }
 
-const RANKS: RankInfo[] = [
-  { name: "bronze",  label: "Bronze",  color: "text-orange-400",  personalInvestment: 100,  referrals: 5,   volume: 1000,    weeklyCommission: 10 },
-  { name: "silver",  label: "Silver",  color: "text-gray-400",    personalInvestment: 200,  referrals: 10,  volume: 2500,    weeklyCommission: 20 },
-  { name: "gold",    label: "Gold",    color: "text-yellow-400",  personalInvestment: 250,  referrals: 15,  volume: 5000,    weeklyCommission: 50 },
-  { name: "diamond", label: "Diamond", color: "text-cyan-400",    personalInvestment: 500,  referrals: 30,  volume: 10000,   weeklyCommission: 100 },
-  { name: "emerald", label: "Emerald", color: "text-emerald-400", personalInvestment: 1000, referrals: 60,  volume: 25000,   weeklyCommission: 250 },
-  { name: "ruby",    label: "Ruby",    color: "text-red-400",     personalInvestment: 1500, referrals: 100, volume: 50000,   weeklyCommission: 500 },
-  { name: "crown",   label: "Crown",   color: "text-amber-300",   personalInvestment: 2000, referrals: 200, volume: 100000,  weeklyCommission: 1000 },
-  { name: "legend",  label: "Legend",  color: "text-purple-400",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
+const DEFAULT_RANKS: RankInfo[] = [
+  { name: "bronze",  label: "Bronze",  personalInvestment: 100,  referrals: 5,   volume: 1000,    weeklyCommission: 10 },
+  { name: "silver",  label: "Silver",  personalInvestment: 200,  referrals: 10,  volume: 2500,    weeklyCommission: 20 },
+  { name: "gold",    label: "Gold",    personalInvestment: 250,  referrals: 15,  volume: 5000,    weeklyCommission: 50 },
+  { name: "diamond", label: "Diamond", personalInvestment: 500,  referrals: 30,  volume: 10000,   weeklyCommission: 100 },
+  { name: "emerald", label: "Emerald", personalInvestment: 1000, referrals: 60,  volume: 25000,   weeklyCommission: 250 },
+  { name: "ruby",    label: "Ruby",    personalInvestment: 1500, referrals: 100, volume: 50000,   weeklyCommission: 500 },
+  { name: "crown",   label: "Crown",   personalInvestment: 2000, referrals: 200, volume: 100000,  weeklyCommission: 1000 },
+  { name: "legend",  label: "Legend",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
 ];
 
 const Rank = () => {
   const { user } = useAuth();
   const [currentRank, setCurrentRank] = useState("unranked");
+  const [ranks, setRanks] = useState<RankInfo[]>(DEFAULT_RANKS);
   const [userStats, setUserStats] = useState({ referrals: 0, teamVolume: 0, personalInvestment: 0 });
 
   useEffect(() => {
     if (!user) return;
 
     const fetchAll = async () => {
-      const { data: profile } = await supabase
+      // Load rank config from DB
+      const { data: configData } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "rank_config")
+        .maybeSingle();
+
+      if (configData?.value && Array.isArray(configData.value)) {
+        setRanks(configData.value as unknown as RankInfo[]);
+      }
         .from("profiles")
         .select("id, rank, referral_code")
         .eq("user_id", user.id)
