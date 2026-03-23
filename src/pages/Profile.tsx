@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User, Phone, Copy, Shield, Award, Mail, Calendar, Users, TrendingUp, Wallet, Zap, Activity, Cpu, ShieldCheck, Trophy, Calculator, Megaphone, BarChart3 } from "lucide-react";
+import { User, Phone, Copy, Shield, Award, Mail, Calendar, Users, TrendingUp, Wallet, Zap, Activity, Cpu, ShieldCheck, Trophy, Calculator, Megaphone, BarChart3, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
