@@ -13,10 +13,7 @@ const NETWORKS = ["BEP20", "TRC20", "ERC20"];
 
 type WithdrawType = "profit" | "principal";
 
-interface PenaltyTier {
-  days: number;
-  rate: number;
-}
+
 
 const Withdraw = () => {
   const { user } = useAuth();
