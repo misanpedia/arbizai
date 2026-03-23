@@ -44,6 +44,7 @@ import AdminSpinControl from "./pages/admin/AdminSpinControl";
 import AdminCheckinSettings from "./pages/admin/AdminCheckinSettings";
 import AdminWithdrawalSettings from "./pages/admin/AdminWithdrawalSettings";
 import AdminInvestments from "./pages/admin/AdminInvestments";
+import AdminRankSettings from "./pages/admin/AdminRankSettings";
 import KYCUpload from "./pages/KYCUpload";
 import SpinWheel from "./pages/SpinWheel";
 import DailyCheckin from "./pages/DailyCheckin";
@@ -127,6 +128,7 @@ const App = () => (
             <Route path="/admin/checkin-settings" element={<AdminRoute><AdminCheckinSettings /></AdminRoute>} />
             <Route path="/admin/withdrawal-settings" element={<AdminRoute><AdminWithdrawalSettings /></AdminRoute>} />
             <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
+            <Route path="/admin/rank-settings" element={<AdminRoute><AdminRankSettings /></AdminRoute>} />
             {/* Public Pages */}
             <Route path="/about" element={<AboutUs />} />
             <Route path="/server-status" element={<ServerStatus />} />

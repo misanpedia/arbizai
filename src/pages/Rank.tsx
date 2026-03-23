@@ -2,39 +2,56 @@ import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Award, Star, Shield, Gem, Crown, Sparkles } from "lucide-react";
+import { Award, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface RankInfo {
   name: string;
   label: string;
-  color: string;
   personalInvestment: number;
   referrals: number;
   volume: number;
   weeklyCommission: number;
 }
 
-const RANKS: RankInfo[] = [
-  { name: "bronze",  label: "Bronze",  color: "text-orange-400",  personalInvestment: 100,  referrals: 5,   volume: 1000,    weeklyCommission: 10 },
-  { name: "silver",  label: "Silver",  color: "text-gray-400",    personalInvestment: 200,  referrals: 10,  volume: 2500,    weeklyCommission: 20 },
-  { name: "gold",    label: "Gold",    color: "text-yellow-400",  personalInvestment: 250,  referrals: 15,  volume: 5000,    weeklyCommission: 50 },
-  { name: "diamond", label: "Diamond", color: "text-cyan-400",    personalInvestment: 500,  referrals: 30,  volume: 10000,   weeklyCommission: 100 },
-  { name: "emerald", label: "Emerald", color: "text-emerald-400", personalInvestment: 1000, referrals: 60,  volume: 25000,   weeklyCommission: 250 },
-  { name: "ruby",    label: "Ruby",    color: "text-red-400",     personalInvestment: 1500, referrals: 100, volume: 50000,   weeklyCommission: 500 },
-  { name: "crown",   label: "Crown",   color: "text-amber-300",   personalInvestment: 2000, referrals: 200, volume: 100000,  weeklyCommission: 1000 },
-  { name: "legend",  label: "Legend",  color: "text-purple-400",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
+const DEFAULT_RANKS: RankInfo[] = [
+  { name: "bronze",  label: "Bronze",  personalInvestment: 100,  referrals: 5,   volume: 1000,    weeklyCommission: 10 },
+  { name: "silver",  label: "Silver",  personalInvestment: 200,  referrals: 10,  volume: 2500,    weeklyCommission: 20 },
+  { name: "gold",    label: "Gold",    personalInvestment: 250,  referrals: 15,  volume: 5000,    weeklyCommission: 50 },
+  { name: "diamond", label: "Diamond", personalInvestment: 500,  referrals: 30,  volume: 10000,   weeklyCommission: 100 },
+  { name: "emerald", label: "Emerald", personalInvestment: 1000, referrals: 60,  volume: 25000,   weeklyCommission: 250 },
+  { name: "ruby",    label: "Ruby",    personalInvestment: 1500, referrals: 100, volume: 50000,   weeklyCommission: 500 },
+  { name: "crown",   label: "Crown",   personalInvestment: 2000, referrals: 200, volume: 100000,  weeklyCommission: 1000 },
+  { name: "legend",  label: "Legend",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
 ];
+
+const RANK_COLORS: Record<string, string> = {
+  bronze: "text-orange-400", silver: "text-gray-400", gold: "text-yellow-400",
+  diamond: "text-cyan-400", emerald: "text-emerald-400", ruby: "text-red-400",
+  crown: "text-amber-300", legend: "text-purple-400",
+};
 
 const Rank = () => {
   const { user } = useAuth();
   const [currentRank, setCurrentRank] = useState("unranked");
+  const [ranks, setRanks] = useState<RankInfo[]>(DEFAULT_RANKS);
   const [userStats, setUserStats] = useState({ referrals: 0, teamVolume: 0, personalInvestment: 0 });
 
   useEffect(() => {
     if (!user) return;
 
     const fetchAll = async () => {
+      // Load rank config from DB
+      const { data: configData } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "rank_config")
+        .maybeSingle();
+
+      if (configData?.value && Array.isArray(configData.value)) {
+        setRanks(configData.value as unknown as RankInfo[]);
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("id, rank, referral_code")
@@ -58,7 +75,6 @@ const Rank = () => {
         }
 
         const personalTotal = personalRes.data ? personalRes.data.reduce((sum, inv) => sum + Number(inv.amount), 0) : 0;
-
         setUserStats({ referrals: refRes.count || 0, teamVolume: teamVol, personalInvestment: personalTotal });
       }
     };
@@ -66,19 +82,18 @@ const Rank = () => {
     fetchAll();
   }, [user]);
 
-  const currentIdx = RANKS.findIndex(r => r.name === currentRank);
+  const currentIdx = ranks.findIndex(r => r.name === currentRank);
   const formatVolume = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
 
   return (
     <DashboardLayout title="Rank">
       <div className="max-w-lg mx-auto space-y-6">
-        {/* Current Rank */}
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-strong rounded-2xl p-6 text-center">
-          <Award className={`w-12 h-12 mx-auto mb-3 ${currentIdx >= 0 ? RANKS[currentIdx].color : "text-muted-foreground"}`} />
+          <Award className={`w-12 h-12 mx-auto mb-3 ${currentIdx >= 0 ? (RANK_COLORS[ranks[currentIdx].name] || "text-primary") : "text-muted-foreground"}`} />
           <h2 className="text-2xl font-display font-bold text-foreground capitalize">{currentRank === "unranked" ? "No Rank" : currentRank}</h2>
           <p className="text-sm text-muted-foreground mt-1">Your Current Rank</p>
           {currentIdx >= 0 && (
-            <p className="text-xs text-success mt-2 font-medium">${RANKS[currentIdx].weeklyCommission}/week commission</p>
+            <p className="text-xs text-success mt-2 font-medium">${ranks[currentIdx].weeklyCommission}/week commission</p>
           )}
 
           <div className="grid grid-cols-3 gap-2 mt-4">
@@ -96,19 +111,18 @@ const Rank = () => {
             </div>
           </div>
 
-          {currentIdx < RANKS.length - 1 && (
+          {currentIdx < ranks.length - 1 && (
             <div className="mt-4">
               <div className="w-full bg-muted rounded-full h-2">
-                <div className="gradient-primary h-2 rounded-full" style={{ width: `${((currentIdx + 1) / RANKS.length) * 100}%` }} />
+                <div className="gradient-primary h-2 rounded-full" style={{ width: `${((currentIdx + 1) / ranks.length) * 100}%` }} />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Next: {RANKS[currentIdx + 1]?.label}</p>
+              <p className="text-xs text-muted-foreground mt-2">Next: {ranks[currentIdx + 1]?.label}</p>
             </div>
           )}
         </motion.div>
 
-        {/* All Ranks */}
         <div className="space-y-2">
-          {RANKS.map((rank, i) => {
+          {ranks.map((rank, i) => {
             const isCurrent = rank.name === currentRank;
             const isAchieved = currentIdx >= 0 && i <= currentIdx;
             return (

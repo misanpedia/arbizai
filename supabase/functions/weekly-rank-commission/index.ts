@@ -5,16 +5,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RANK_WEEKLY: Record<string, number> = {
-  bronze: 10,
-  silver: 20,
-  gold: 50,
-  diamond: 100,
-  emerald: 250,
-  ruby: 500,
-  crown: 1000,
-  legend: 5000,
-};
+interface RankDef {
+  name: string;
+  weeklyCommission: number;
+}
+
+const DEFAULT_RANKS: RankDef[] = [
+  { name: "bronze",  weeklyCommission: 10 },
+  { name: "silver",  weeklyCommission: 20 },
+  { name: "gold",    weeklyCommission: 50 },
+  { name: "diamond", weeklyCommission: 100 },
+  { name: "emerald", weeklyCommission: 250 },
+  { name: "ruby",    weeklyCommission: 500 },
+  { name: "crown",   weeklyCommission: 1000 },
+  { name: "legend",  weeklyCommission: 5000 },
+];
+
+async function loadRankWeekly(supabase: any): Promise<Record<string, number>> {
+  const { data } = await supabase
+    .from("system_settings")
+    .select("value")
+    .eq("key", "rank_config")
+    .maybeSingle();
+
+  const ranks = (data?.value && Array.isArray(data.value)) ? data.value as RankDef[] : DEFAULT_RANKS;
+  const map: Record<string, number> = {};
+  ranks.forEach(r => { map[r.name] = r.weeklyCommission; });
+  return map;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -26,6 +44,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const RANK_WEEKLY = await loadRankWeekly(supabase);
     const today = new Date().toISOString().split("T")[0];
 
     // Get all active profiles with a rank
@@ -43,7 +62,7 @@ Deno.serve(async (req) => {
       const weeklyAmount = RANK_WEEKLY[profile.rank || ""];
       if (!weeklyAmount) continue;
 
-      // Check if already paid this week (prevent double payment)
+      // Check if already paid this week
       const { data: existing } = await supabase
         .from("commissions")
         .select("id")

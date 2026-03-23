@@ -5,7 +5,7 @@ import {
   BarChart3, Users, ShieldCheck, ArrowDownCircle, ArrowUpCircle,
   TrendingUp, Cpu, Wallet, GitBranch, FileText, Bell, Shield,
   Activity, Settings, UserCog, Menu, X, ChevronLeft, LogOut, Zap, Coins,
-  Megaphone, CalendarCheck
+  Megaphone, CalendarCheck, Award
 } from "lucide-react";
 
 const menuItems = [
@@ -20,6 +20,7 @@ const menuItems = [
   { path: "/admin/profit-engine", label: "Profit Engine", icon: Cpu },
   { path: "/admin/wallets", label: "Wallets", icon: Wallet },
   { path: "/admin/referral", label: "Referral", icon: GitBranch },
+  { path: "/admin/rank-settings", label: "Rank Settings", icon: Award },
   { path: "/admin/reports", label: "Reports", icon: FileText },
   { path: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { path: "/admin/notifications", label: "Notifications", icon: Bell },
