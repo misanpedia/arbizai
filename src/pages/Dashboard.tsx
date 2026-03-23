@@ -104,6 +104,7 @@ const Dashboard = () => {
     { icon: Zap, label: "Lucky Spin", color: "text-primary", path: "/spin" },
     { icon: Activity, label: "Check-in", color: "text-success", path: "/checkin" },
     { icon: History, label: "History", color: "text-muted-foreground", path: "/history" },
+    { icon: Headphones, label: "Support", color: "text-warning", path: "/support" },
   ];
 
   return (
