@@ -61,7 +61,7 @@ const AdminWithdrawalSettings = () => {
         withdrawal_auto_approve: map.withdrawal_auto_approve ?? defaultConfig.withdrawal_auto_approve,
         withdrawal_auto_approve_limit: map.withdrawal_auto_approve_limit ?? defaultConfig.withdrawal_auto_approve_limit,
         withdrawal_cooldown_hours: map.withdrawal_cooldown_hours ?? defaultConfig.withdrawal_cooldown_hours,
-        penalty_tiers: map.withdrawal_penalty_tiers ?? defaultConfig.penalty_tiers,
+        principal_penalty_rate: map.withdrawal_principal_penalty_rate ?? defaultConfig.principal_penalty_rate,
       });
     }
     setLoading(false);
