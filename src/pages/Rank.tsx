@@ -80,7 +80,7 @@ const Rank = () => {
         const { data: downlineProfiles } = await supabase
           .from("profiles")
           .select("user_id")
-          .eq("referred_by", profile.id);
+          .eq("referred_by", profile.referral_code);
 
         let teamVol = 0;
         if (downlineProfiles && downlineProfiles.length > 0) {
