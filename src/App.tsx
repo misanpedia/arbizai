@@ -128,6 +128,7 @@ const App = () => (
             <Route path="/admin/checkin-settings" element={<AdminRoute><AdminCheckinSettings /></AdminRoute>} />
             <Route path="/admin/withdrawal-settings" element={<AdminRoute><AdminWithdrawalSettings /></AdminRoute>} />
             <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
+            <Route path="/admin/rank-settings" element={<AdminRoute><AdminRankSettings /></AdminRoute>} />
             {/* Public Pages */}
             <Route path="/about" element={<AboutUs />} />
             <Route path="/server-status" element={<ServerStatus />} />
