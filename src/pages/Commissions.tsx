@@ -51,7 +51,7 @@ const Commissions = () => {
             {commissions.map((c, i) => (
               <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="glass-strong rounded-xl p-3 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground capitalize">{c.source_type}</p>
+                  <p className="text-sm font-medium text-foreground">{c.description || c.type || "Commission"}</p>
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <Calendar className="w-3 h-3" />
                     {new Date(c.created_at).toLocaleDateString()}
