@@ -78,7 +78,7 @@ const Profile = () => {
     { icon: BarChart3, label: "Profit Log", color: "text-warning", path: "/profit-history" },
     { icon: Megaphone, label: "News", color: "text-primary", path: "/announcements" },
     { icon: Cpu, label: "Education", color: "text-accent", path: "/education" },
-    { icon: ShieldCheck, label: "Support", color: "text-warning", path: "/support" },
+    { icon: Lock, label: "Security", color: "text-warning", path: "/security-info" },
   ];
 
   return (
