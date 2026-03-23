@@ -90,24 +90,9 @@ const Withdraw = () => {
       if (lastWdRes.data && lastWdRes.data.length > 0) {
         setLastWithdrawAt(lastWdRes.data[0].created_at);
       }
-      // Calculate penalty rate from admin tiers + first deposit
-      if (firstDepositRes.data && firstDepositRes.data.length > 0) {
-        const daysSince = Math.floor((Date.now() - new Date(firstDepositRes.data[0].created_at).getTime()) / (1000 * 60 * 60 * 24));
-        const sorted = [...penaltyTiers].sort((a, b) => b.days - a.days);
-        let rate = sorted.length > 0 ? sorted[sorted.length - 1].rate : 0.30;
-        for (const tier of sorted) {
-          if (daysSince >= tier.days) {
-            rate = tier.rate;
-            break;
-          }
-        }
-        setPenaltyRate(rate);
-      } else {
-        const sorted = [...penaltyTiers].sort((a, b) => a.days - b.days);
-        setPenaltyRate(sorted[0]?.rate ?? 0.30);
-      }
+      setPenaltyRate(principalPenaltyRate);
     });
-  }, [user, penaltyTiers]);
+  }, [user, principalPenaltyRate]);
 
   const profitCommissionBalance = totalProfit + totalCommission;
   const amt = parseFloat(amount || "0");
