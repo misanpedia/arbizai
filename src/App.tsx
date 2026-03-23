@@ -64,6 +64,7 @@ import SecurityPage from "./pages/SecurityPage";
 import Announcements from "./pages/Announcements";
 import ProfitCalculator from "./pages/ProfitCalculator";
 import ProfitHistory from "./pages/ProfitHistory";
+import AdminLogin from "./pages/AdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/calculator" element={<ProtectedRoute><ProfitCalculator /></ProtectedRoute>} />
             <Route path="/profit-history" element={<ProtectedRoute><ProfitHistory /></ProtectedRoute>} />
             {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="/admin/kyc" element={<AdminRoute><AdminKYC /></AdminRoute>} />
