@@ -25,6 +25,12 @@ const DEFAULT_RANKS: RankInfo[] = [
   { name: "legend",  label: "Legend",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
 ];
 
+const RANK_COLORS: Record<string, string> = {
+  bronze: "text-orange-400", silver: "text-gray-400", gold: "text-yellow-400",
+  diamond: "text-cyan-400", emerald: "text-emerald-400", ruby: "text-red-400",
+  crown: "text-amber-300", legend: "text-purple-400",
+};
+
 const Rank = () => {
   const { user } = useAuth();
   const [currentRank, setCurrentRank] = useState("unranked");
@@ -45,6 +51,8 @@ const Rank = () => {
       if (configData?.value && Array.isArray(configData.value)) {
         setRanks(configData.value as unknown as RankInfo[]);
       }
+
+      const { data: profile } = await supabase
         .from("profiles")
         .select("id, rank, referral_code")
         .eq("user_id", user.id)
@@ -67,7 +75,6 @@ const Rank = () => {
         }
 
         const personalTotal = personalRes.data ? personalRes.data.reduce((sum, inv) => sum + Number(inv.amount), 0) : 0;
-
         setUserStats({ referrals: refRes.count || 0, teamVolume: teamVol, personalInvestment: personalTotal });
       }
     };
@@ -75,19 +82,18 @@ const Rank = () => {
     fetchAll();
   }, [user]);
 
-  const currentIdx = RANKS.findIndex(r => r.name === currentRank);
+  const currentIdx = ranks.findIndex(r => r.name === currentRank);
   const formatVolume = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
 
   return (
     <DashboardLayout title="Rank">
       <div className="max-w-lg mx-auto space-y-6">
-        {/* Current Rank */}
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-strong rounded-2xl p-6 text-center">
-          <Award className={`w-12 h-12 mx-auto mb-3 ${currentIdx >= 0 ? RANKS[currentIdx].color : "text-muted-foreground"}`} />
+          <Award className={`w-12 h-12 mx-auto mb-3 ${currentIdx >= 0 ? (RANK_COLORS[ranks[currentIdx].name] || "text-primary") : "text-muted-foreground"}`} />
           <h2 className="text-2xl font-display font-bold text-foreground capitalize">{currentRank === "unranked" ? "No Rank" : currentRank}</h2>
           <p className="text-sm text-muted-foreground mt-1">Your Current Rank</p>
           {currentIdx >= 0 && (
-            <p className="text-xs text-success mt-2 font-medium">${RANKS[currentIdx].weeklyCommission}/week commission</p>
+            <p className="text-xs text-success mt-2 font-medium">${ranks[currentIdx].weeklyCommission}/week commission</p>
           )}
 
           <div className="grid grid-cols-3 gap-2 mt-4">
@@ -105,19 +111,18 @@ const Rank = () => {
             </div>
           </div>
 
-          {currentIdx < RANKS.length - 1 && (
+          {currentIdx < ranks.length - 1 && (
             <div className="mt-4">
               <div className="w-full bg-muted rounded-full h-2">
-                <div className="gradient-primary h-2 rounded-full" style={{ width: `${((currentIdx + 1) / RANKS.length) * 100}%` }} />
+                <div className="gradient-primary h-2 rounded-full" style={{ width: `${((currentIdx + 1) / ranks.length) * 100}%` }} />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Next: {RANKS[currentIdx + 1]?.label}</p>
+              <p className="text-xs text-muted-foreground mt-2">Next: {ranks[currentIdx + 1]?.label}</p>
             </div>
           )}
         </motion.div>
 
-        {/* All Ranks */}
         <div className="space-y-2">
-          {RANKS.map((rank, i) => {
+          {ranks.map((rank, i) => {
             const isCurrent = rank.name === currentRank;
             const isAchieved = currentIdx >= 0 && i <= currentIdx;
             return (
