@@ -79,9 +79,9 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-balance"
+            className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-pretty px-2"
           >
-            Our AI engine scans 50+ exchanges in real-time, detects price spreads, and executes profitable arbitrage trades automatically. Start with as little as $5.
+            Our AI engine scans 50+ exchanges in real-time, detects price spreads, and executes profitable arbitrage trades automatically. Start with as little as $10.
           </motion.p>
 
           <motion.div
