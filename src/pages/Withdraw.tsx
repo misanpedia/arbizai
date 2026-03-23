@@ -61,9 +61,7 @@ const Withdraw = () => {
           if (map.withdrawal_min_amount !== undefined) setMinAmount(Number(map.withdrawal_min_amount));
           if (map.withdrawal_max_amount !== undefined) setMaxAmount(Number(map.withdrawal_max_amount));
           if (map.withdrawal_cooldown_hours !== undefined) setCooldownHours(Number(map.withdrawal_cooldown_hours));
-          if (map.withdrawal_penalty_tiers && Array.isArray(map.withdrawal_penalty_tiers)) {
-            setPenaltyTiers(map.withdrawal_penalty_tiers);
-          }
+          if (map.withdrawal_principal_penalty_rate !== undefined) setPrincipalPenaltyRate(Number(map.withdrawal_principal_penalty_rate));
         }
         setSettingsLoaded(true);
       });
