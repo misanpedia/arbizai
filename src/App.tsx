@@ -44,6 +44,7 @@ import AdminSpinControl from "./pages/admin/AdminSpinControl";
 import AdminCheckinSettings from "./pages/admin/AdminCheckinSettings";
 import AdminWithdrawalSettings from "./pages/admin/AdminWithdrawalSettings";
 import AdminInvestments from "./pages/admin/AdminInvestments";
+import AdminRankSettings from "./pages/admin/AdminRankSettings";
 import KYCUpload from "./pages/KYCUpload";
 import SpinWheel from "./pages/SpinWheel";
 import DailyCheckin from "./pages/DailyCheckin";
