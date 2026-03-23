@@ -110,10 +110,10 @@ export function HeroSection() {
               { label: "Active Traders", value: "24,500+", icon: Zap },
               { label: "Uptime", value: "99.97%", icon: Shield },
             ].map((stat) => (
-              <div key={stat.label} className="glass rounded-xl p-4">
-                <stat.icon className="w-5 h-5 text-primary mx-auto mb-2" />
-                <div className="font-display font-bold text-xl md:text-2xl">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
+              <div key={stat.label} className="glass rounded-xl p-3 md:p-4">
+                <stat.icon className="w-4 h-4 md:w-5 md:h-5 text-primary mx-auto mb-1.5 md:mb-2" />
+                <div className="font-display font-bold text-lg md:text-2xl">{stat.value}</div>
+                <div className="text-[10px] md:text-xs text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </motion.div>
