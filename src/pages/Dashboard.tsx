@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import { DefiActivityFeed } from "@/components/dashboard/DefiActivityFeed";
+import { Badge } from "@/components/ui/badge";
 
 interface WalletData {
   currency: string;
@@ -177,10 +177,6 @@ const Dashboard = () => {
         <ArbitrageScanner />
       </div>
 
-      {/* DeFi Activity Feed */}
-      <div className="px-4 mt-6">
-        <DefiActivityFeed />
-      </div>
 
       {/* Bottom Navigation (Mobile) */}
       <nav className="fixed bottom-0 left-0 right-0 glass-strong border-t border-border/50 px-2 py-2 flex justify-around md:hidden z-50">
@@ -240,6 +236,7 @@ function ArbitrageScanner() {
         <div className="flex items-center gap-2">
           <Cpu className="w-5 h-5 text-primary animate-pulse" />
           <span className="text-sm font-medium text-foreground">AI Engine Active</span>
+          <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-success border-0">● Live</Badge>
         </div>
         <div className="flex items-center gap-1.5">
           <Wifi className="w-4 h-4 text-success" />

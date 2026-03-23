@@ -60,7 +60,7 @@ const Rank = () => {
       // Fetch user profile & referral count
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, rank, referred_by")
+        .select("id, rank, referral_code, referred_by")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -71,7 +71,7 @@ const Rank = () => {
         const { count: refCount } = await supabase
           .from("profiles")
           .select("id", { count: "exact", head: true })
-          .eq("referred_by", profile.id)
+          .eq("referred_by", profile.referral_code)
           .eq("is_active", true);
 
         // Calculate team volume (sum of all downline investments)
@@ -80,7 +80,7 @@ const Rank = () => {
         const { data: downlineProfiles } = await supabase
           .from("profiles")
           .select("user_id")
-          .eq("referred_by", profile.id);
+          .eq("referred_by", profile.referral_code);
 
         let teamVol = 0;
         if (downlineProfiles && downlineProfiles.length > 0) {
