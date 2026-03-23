@@ -27,6 +27,7 @@ Deno.serve(async (req) => {
     if (authError || !user) throw new Error("Unauthorized");
 
     const OXAPAY_KEY = Deno.env.get("OXAPAY_MERCHANT_KEY");
+    console.log("OXAPAY_KEY length:", OXAPAY_KEY?.length, "first4:", OXAPAY_KEY?.substring(0, 4), "last4:", OXAPAY_KEY?.substring((OXAPAY_KEY?.length || 0) - 4));
     if (!OXAPAY_KEY) throw new Error("OxaPay Merchant Key not configured");
 
     const { network = "BSC", currency = "USDT" } = await req.json();
