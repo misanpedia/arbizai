@@ -60,7 +60,7 @@ const Rank = () => {
       // Fetch user profile & referral count
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, rank, referred_by")
+        .select("id, rank, referral_code, referred_by")
         .eq("user_id", user.id)
         .maybeSingle();
 
