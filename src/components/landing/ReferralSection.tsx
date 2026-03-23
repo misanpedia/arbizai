@@ -3,15 +3,8 @@ import { Users, TrendingUp, Award, Layers } from "lucide-react";
 
 const commissionLevels = [
   { level: 1, rate: "10%" },
-  { level: 2, rate: "5%" },
-  { level: 3, rate: "5%" },
-  { level: 4, rate: "4%" },
-  { level: 5, rate: "4%" },
-  { level: 6, rate: "3%" },
-  { level: 7, rate: "3%" },
-  { level: 8, rate: "2%" },
-  { level: 9, rate: "2%" },
-  { level: 10, rate: "1%" },
+  { level: "2–10", rate: "2%" },
+  { level: "11–20", rate: "1%" },
 ];
 
 export function ReferralSection() {
@@ -28,7 +21,7 @@ export function ReferralSection() {
             Referral <span className="gradient-text">Commission</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Earn passive income from your network. Get commission rebates from your downline's daily profits across 10 levels.
+            Earn passive income from your network. Get commission rebates from your downline's daily profits across 20 levels.
           </p>
         </motion.div>
 
@@ -44,12 +37,12 @@ export function ReferralSection() {
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Layers className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="font-display font-bold text-xl">10-Level Commission</h3>
+              <h3 className="font-display font-bold text-xl">20-Level Rebate</h3>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {commissionLevels.map((item) => (
+            <div className="space-y-2">
+              {commissionLevels.map((item, i) => (
                 <div
-                  key={item.level}
+                  key={i}
                   className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3"
                 >
                   <span className="text-sm text-muted-foreground">Level {item.level}</span>
@@ -58,7 +51,7 @@ export function ReferralSection() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              * Commission is calculated as a rebate from your downline's daily profit.
+              * Rebate commission is calculated as a percentage of your downline's daily profit.
             </p>
           </motion.div>
 
@@ -83,7 +76,7 @@ export function ReferralSection() {
               {
                 icon: Award,
                 title: "Build Your Network",
-                desc: "The deeper your network, the more you earn. Up to 10 levels of passive commission income.",
+                desc: "The deeper your network, the more you earn. Up to 20 levels of passive commission income.",
               },
             ].map((item, i) => (
               <div key={i} className="glass rounded-2xl p-5 flex gap-4 items-start">
