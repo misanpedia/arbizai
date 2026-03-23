@@ -284,37 +284,6 @@ const Deposit = () => {
               </p>
             </div>
 
-            {/* Quick Invoice (optional) */}
-            <div className="glass-strong rounded-2xl p-5 space-y-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Zap className="w-5 h-5 text-primary" />
-                <span className="text-sm font-medium text-foreground">Quick Invoice (Optional)</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Create an invoice with a specific amount for easier tracking and automatic confirmation.
-              </p>
-              <div className="space-y-2">
-                <Label>Amount (USD)</Label>
-                <Input
-                  type="number"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="glass"
-                />
-              </div>
-              <Button
-                onClick={handleAutoDeposit}
-                disabled={loading || !amount || parseFloat(amount) <= 0}
-                className="w-full gradient-primary text-primary-foreground"
-              >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
-                ) : (
-                  `Create Invoice $${amount || "0"}`
-                )}
-              </Button>
-            </div>
           </motion.div>
         ) : (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
