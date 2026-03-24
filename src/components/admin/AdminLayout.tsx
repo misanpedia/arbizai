@@ -5,7 +5,7 @@ import {
   BarChart3, Users, ShieldCheck, ArrowDownCircle, ArrowUpCircle,
   TrendingUp, Cpu, Wallet, GitBranch, FileText, Bell, Shield,
   Activity, Settings, UserCog, Menu, X, ChevronLeft, LogOut, Zap, Coins,
-  Megaphone, CalendarCheck, Award
+  Megaphone, CalendarCheck, Award, MessageCircle
 } from "lucide-react";
 
 const menuItems = [
