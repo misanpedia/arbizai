@@ -144,7 +144,7 @@ const AdminSupport = () => {
   const filteredTickets = filter === "all" ? tickets : tickets.filter((t) => t.status === filter);
 
   const statusBadge = (status: string) => {
-    if (status === "open") return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Open</Badge>;
+    if (status === "open") return <Badge className="bg-primary/20 text-primary border-primary/30">Open</Badge>;
     return <Badge className="bg-muted text-muted-foreground border-border">Closed</Badge>;
   };
 
