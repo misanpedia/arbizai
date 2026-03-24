@@ -22,6 +22,7 @@ const menuItems = [
   { path: "/admin/referral", label: "Referral", icon: GitBranch },
   { path: "/admin/rank-settings", label: "Rank Settings", icon: Award },
   { path: "/admin/reports", label: "Reports", icon: FileText },
+  { path: "/admin/support", label: "Support Messages", icon: MessageCircle },
   { path: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { path: "/admin/notifications", label: "Notifications", icon: Bell },
   { path: "/admin/spin-control", label: "Spin Wheel", icon: Zap },
