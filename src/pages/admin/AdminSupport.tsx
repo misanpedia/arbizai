@@ -127,6 +127,13 @@ const AdminSupport = () => {
       fetchMessages(selectedTicket.id);
       // Update ticket updated_at
       await supabase.from("support_tickets").update({ updated_at: new Date().toISOString() }).eq("id", selectedTicket.id);
+      // Send notification to the member
+      await supabase.from("notifications").insert({
+        user_id: selectedTicket.user_id,
+        title: "Support Reply",
+        message: `Admin telah membalas tiket "${selectedTicket.subject}"`,
+        type: "support",
+      });
     }
     setSending(false);
   };

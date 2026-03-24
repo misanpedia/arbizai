@@ -75,7 +75,22 @@ const Support = () => {
   }, [view, user]);
 
   useEffect(() => {
-    if (selectedTicket) fetchMessages(selectedTicket.id);
+    if (selectedTicket) {
+      fetchMessages(selectedTicket.id);
+      // Realtime subscription for new replies
+      const channel = supabase
+        .channel(`ticket-${selectedTicket.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `ticket_id=eq.${selectedTicket.id}`,
+        }, () => {
+          fetchMessages(selectedTicket.id);
+        })
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }
   }, [selectedTicket?.id]);
 
   const handleSubmit = async () => {
