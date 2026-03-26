@@ -60,7 +60,7 @@ const AdminReferral = () => {
   }, [profiles, searchQuery]);
 
   const filteredRoots = useMemo(() => {
-    if (!searchQuery.trim()) return profiles.filter(p => !p.referred_by);
+    if (!searchQuery.trim()) return profiles.filter(p => !p.referred_by || !profiles.some(up => up.referral_code === p.referred_by));
     return filteredProfiles;
   }, [filteredProfiles, profiles, searchQuery]);
 
@@ -201,7 +201,7 @@ function ReferralNode({ profile, profiles, level, editingProfile, editName, setE
   onEdit: (p: any) => void; onSave: (id: string) => void; onCancel: () => void;
   onChangeUpline: (p: any) => void;
 }) {
-  const children = profiles.filter(p => p.referred_by === profile.id);
+  const children = profiles.filter(p => p.referred_by === profile.referral_code);
   const isEditing = editingProfile === profile.id;
 
   return (
