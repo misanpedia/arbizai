@@ -21,7 +21,7 @@ export function ChangeUplineDialog({ open, onClose, profile, profiles, onSuccess
   const [selected, setSelected] = useState<any | null>(null);
 
   const currentUpline = profile?.referred_by
-    ? profiles.find(p => p.id === profile.referred_by)
+    ? profiles.find(p => p.referral_code === profile.referred_by)
     : null;
 
   const results = search.trim().length >= 2
@@ -35,17 +35,17 @@ export function ChangeUplineDialog({ open, onClose, profile, profiles, onSuccess
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
-    const newUplineId = selected ? selected.id : null;
+    const newReferralCode = selected ? selected.referral_code : null;
     const { error } = await supabase
       .from("profiles")
-      .update({ referred_by: newUplineId })
+      .update({ referred_by: newReferralCode })
       .eq("id", profile.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Upline berhasil diubah!" });
-      onSuccess(profile.id, newUplineId);
+      onSuccess(profile.id, newReferralCode);
       onClose();
     }
     setSaving(false);
