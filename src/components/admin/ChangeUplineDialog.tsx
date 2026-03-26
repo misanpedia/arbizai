@@ -45,7 +45,7 @@ export function ChangeUplineDialog({ open, onClose, profile, profiles, onSuccess
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Upline berhasil diubah!" });
-      onSuccess(profile.id, newUplineId);
+      onSuccess(profile.id, newReferralCode);
       onClose();
     }
     setSaving(false);
