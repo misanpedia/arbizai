@@ -15,157 +15,247 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const OXAPAY_KEY = Deno.env.get("OXAPAY_MERCHANT_KEY");
-    if (!OXAPAY_KEY) throw new Error("OxaPay Merchant Key not configured");
-
     const body = await req.json();
-    console.log("OxaPay webhook payload:", JSON.stringify(body));
+    console.log("OxaPay webhook received:", JSON.stringify(body));
 
-    const { track_id, status, amount, txID, type } = body;
+    // OxaPay static address callback fields:
+    // status, amount, currency, txID, address, network, track_id, type
+    const { 
+      status, 
+      amount, 
+      currency, 
+      txID, 
+      address, 
+      network, 
+      track_id,
+      type,
+      pay_amount,
+      pay_currency
+    } = body;
 
-    if (!track_id) {
-      return new Response(JSON.stringify({ error: "Missing track_id" }), {
-        status: 400,
+    // Determine the actual amount received
+    const receivedAmount = parseFloat(pay_amount || amount || "0");
+
+    if (receivedAmount <= 0) {
+      console.log("Invalid amount:", receivedAmount);
+      return new Response(JSON.stringify({ success: false, error: "Invalid amount" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Verify the payment via OxaPay API
-    const verifyRes = await fetch("https://api.oxapay.com/v1/payment/inquiry", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "merchant_api_key": OXAPAY_KEY,
-      },
-      body: JSON.stringify({ track_id }),
-    });
-
-    const verifyData = await verifyRes.json();
-    console.log("OxaPay verify response:", JSON.stringify(verifyData));
-
     // Map OxaPay status to our status
     let newStatus: string;
-    if (verifyData.status === "Paid" || verifyData.status === "Confirmed") {
+    const oxaStatus = (status || "").toLowerCase();
+    if (oxaStatus === "paid" || oxaStatus === "confirmed" || oxaStatus === "complete" || oxaStatus === "sending") {
       newStatus = "approved";
-    } else if (verifyData.status === "Expired" || verifyData.status === "Failed") {
+    } else if (oxaStatus === "expired" || oxaStatus === "failed") {
       newStatus = "cancelled";
     } else {
       // Still pending/waiting
-      newStatus = "pending";
-    }
-
-    if (newStatus === "pending") {
+      console.log("Payment still pending, status:", status);
       return new Response(JSON.stringify({ success: true, status: "still_pending" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Find the transaction by track_id
-    const { data: txn, error: txnError } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("tx_hash", track_id)
-      .eq("type", "deposit")
-      .eq("status", "pending")
-      .maybeSingle();
-
-    if (txnError || !txn) {
-      console.log("Transaction not found for track_id:", track_id);
-      return new Response(JSON.stringify({ success: true, status: "no_matching_txn" }), {
+    if (newStatus === "cancelled") {
+      console.log("Payment cancelled/expired");
+      return new Response(JSON.stringify({ success: true, status: "cancelled" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Update transaction status
-    const confirmedAmount = verifyData.pay_amount ? parseFloat(verifyData.pay_amount) : txn.amount;
+    // ---- APPROVED PAYMENT - Find the user ----
 
-    await supabase
-      .from("transactions")
-      .update({
-        status: newStatus,
-        amount: confirmedAmount,
-        tx_hash: verifyData.txID || track_id,
-      })
-      .eq("id", txn.id);
+    // Strategy 1: Find by track_id in transactions table (for invoice-based payments)
+    let userId: string | null = null;
+    let existingTxn: any = null;
 
-    // If approved, credit the user's wallet
-    if (newStatus === "approved") {
-      const { data: wallet } = await supabase
-        .from("wallets")
+    if (track_id) {
+      const { data: txn } = await supabase
+        .from("transactions")
         .select("*")
-        .eq("user_id", txn.user_id)
-        .eq("currency", "USDT")
+        .eq("tx_hash", track_id)
+        .eq("type", "deposit")
+        .eq("status", "pending")
+        .maybeSingle();
+      
+      if (txn) {
+        existingTxn = txn;
+        userId = txn.user_id;
+        console.log("Found existing transaction by track_id:", txn.id, "user:", userId);
+      }
+    }
+
+    // Strategy 2: Find user by static address
+    if (!userId && address) {
+      const { data: staticAddr } = await supabase
+        .from("user_static_addresses")
+        .select("*")
+        .eq("address", address)
         .maybeSingle();
 
-      if (wallet) {
-        await supabase
-          .from("wallets")
-          .update({ balance: (wallet.balance || 0) + confirmedAmount })
-          .eq("id", wallet.id);
+      if (staticAddr) {
+        userId = staticAddr.user_id;
+        console.log("Found user by static address:", userId, "address:", address);
       }
+    }
 
-      // Send notification
-      await supabase.from("notifications").insert({
-        user_id: txn.user_id,
-        title: "💰 Deposit Confirmed",
-        message: `Your deposit of $${confirmedAmount.toFixed(2)} has been confirmed and credited to your wallet.`,
-        type: "success",
-      });
-
-      // Process referral commission
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("referred_by")
-        .eq("user_id", txn.user_id)
+    // Strategy 3: Find user by track_id in user_static_addresses
+    if (!userId && track_id) {
+      const { data: staticAddr } = await supabase
+        .from("user_static_addresses")
+        .select("*")
+        .eq("track_id", track_id)
         .maybeSingle();
 
-      if (profile?.referred_by) {
-        const { data: referrer } = await supabase
-          .from("profiles")
-          .select("user_id")
-          .eq("referral_code", profile.referred_by)
-          .maybeSingle();
-
-        if (referrer) {
-          const commissionRate = 0.05; // 5%
-          const commissionAmount = confirmedAmount * commissionRate;
-
-          await supabase.from("commissions").insert({
-            user_id: referrer.user_id,
-            from_user_id: txn.user_id,
-            amount: commissionAmount,
-            type: "referral",
-            level: 1,
-            description: `Referral commission from deposit of $${confirmedAmount.toFixed(2)}`,
-          });
-
-          // Credit commission to referrer wallet
-          const { data: refWallet } = await supabase
-            .from("wallets")
-            .select("*")
-            .eq("user_id", referrer.user_id)
-            .eq("currency", "USDT")
-            .maybeSingle();
-
-          if (refWallet) {
-            await supabase
-              .from("wallets")
-              .update({ balance: (refWallet.balance || 0) + commissionAmount })
-              .eq("id", refWallet.id);
-          }
-        }
+      if (staticAddr) {
+        userId = staticAddr.user_id;
+        console.log("Found user by static address track_id:", userId);
       }
-    } else if (newStatus === "cancelled") {
-      await supabase.from("notifications").insert({
-        user_id: txn.user_id,
-        title: "❌ Deposit Failed",
-        message: `Your deposit of $${txn.amount} has expired or failed. Please try again.`,
-        type: "error",
+    }
+
+    if (!userId) {
+      console.error("Could not identify user for payment. address:", address, "track_id:", track_id);
+      return new Response(JSON.stringify({ success: false, error: "User not found" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Check for duplicate: has this txID already been processed?
+    if (txID) {
+      const { data: dupCheck } = await supabase
+        .from("transactions")
+        .select("id")
+        .eq("tx_hash", txID)
+        .eq("type", "deposit")
+        .eq("status", "approved")
+        .maybeSingle();
+
+      if (dupCheck) {
+        console.log("Duplicate payment already processed, txID:", txID);
+        return new Response(JSON.stringify({ success: true, status: "already_processed" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // If we have an existing pending transaction, update it
+    if (existingTxn) {
+      await supabase
+        .from("transactions")
+        .update({
+          status: "approved",
+          amount: receivedAmount,
+          tx_hash: txID || track_id,
+          network: network || existingTxn.network,
+        })
+        .eq("id", existingTxn.id);
+      console.log("Updated existing transaction:", existingTxn.id);
+    } else {
+      // Create a new deposit transaction
+      const { error: insertErr } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: userId,
+          type: "deposit",
+          amount: receivedAmount,
+          status: "approved",
+          currency: pay_currency || currency || "USDT",
+          network: network || null,
+          tx_hash: txID || track_id || null,
+          wallet_address: address || null,
+          description: `Auto deposit via OxaPay - ${receivedAmount} ${pay_currency || currency || "USDT"}`,
+        });
+      
+      if (insertErr) {
+        console.error("Failed to insert transaction:", insertErr);
+      } else {
+        console.log("Created new deposit transaction for user:", userId, "amount:", receivedAmount);
+      }
+    }
+
+    // Credit the user's wallet
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("currency", "USDT")
+      .maybeSingle();
+
+    if (wallet) {
+      const newBalance = (wallet.balance || 0) + receivedAmount;
+      await supabase
+        .from("wallets")
+        .update({ balance: newBalance, updated_at: new Date().toISOString() })
+        .eq("id", wallet.id);
+      console.log("Wallet credited. Old:", wallet.balance, "New:", newBalance);
+    } else {
+      // Create wallet if it doesn't exist
+      await supabase.from("wallets").insert({
+        user_id: userId,
+        currency: "USDT",
+        balance: receivedAmount,
+      });
+      console.log("Created new wallet for user:", userId, "balance:", receivedAmount);
+    }
+
+    // Send notification
+    await supabase.from("notifications").insert({
+      user_id: userId,
+      title: "💰 Deposit Confirmed",
+      message: `Your deposit of $${receivedAmount.toFixed(2)} USDT has been confirmed and credited to your wallet.`,
+      type: "success",
+    });
+
+    // Process referral commission (10% level 1 rebate on deposit)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("referred_by")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (profile?.referred_by) {
+      const { data: referrer } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("referral_code", profile.referred_by)
+        .maybeSingle();
+
+      if (referrer) {
+        const commissionRate = 0.05; // 5% deposit commission
+        const commissionAmount = receivedAmount * commissionRate;
+
+        await supabase.from("commissions").insert({
+          user_id: referrer.user_id,
+          from_user_id: userId,
+          amount: commissionAmount,
+          type: "referral",
+          level: 1,
+          description: `Referral commission from deposit of $${receivedAmount.toFixed(2)}`,
+        });
+
+        // Credit commission to referrer wallet
+        const { data: refWallet } = await supabase
+          .from("wallets")
+          .select("*")
+          .eq("user_id", referrer.user_id)
+          .eq("currency", "USDT")
+          .maybeSingle();
+
+        if (refWallet) {
+          await supabase
+            .from("wallets")
+            .update({ balance: (refWallet.balance || 0) + commissionAmount })
+            .eq("id", refWallet.id);
+        }
+      }
+    }
+
+    console.log("Deposit fully processed for user:", userId, "amount:", receivedAmount);
+
     return new Response(
-      JSON.stringify({ success: true, status: newStatus }),
+      JSON.stringify({ success: true, status: "approved", amount: receivedAmount }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
