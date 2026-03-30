@@ -82,7 +82,7 @@ const Rank = () => {
     fetchAll();
   }, [user]);
 
-  const currentIdx = ranks.findIndex(r => r.name === currentRank);
+  const currentIdx = currentRank ? ranks.findIndex(r => r.name === currentRank) : -1;
   const formatVolume = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`;
 
   return (
