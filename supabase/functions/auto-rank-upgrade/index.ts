@@ -48,7 +48,6 @@ Deno.serve(async (req) => {
     const RANKS = await loadRanks(supabase);
     const RANK_ORDER = RANKS.map(r => r.name);
 
-    // Get all active profiles
     const { data: profiles, error: profErr } = await supabase
       .from("profiles")
       .select("user_id, referral_code, rank")
@@ -57,6 +56,7 @@ Deno.serve(async (req) => {
     if (profErr) throw profErr;
 
     let upgraded = 0;
+    let downgraded = 0;
 
     for (const profile of profiles || []) {
       // 1. Personal active investment total
@@ -65,7 +65,6 @@ Deno.serve(async (req) => {
         .select("amount")
         .eq("user_id", profile.user_id)
         .eq("status", "active");
-
       const personalInvestment = personalInvs
         ? personalInvs.reduce((sum: number, i: any) => sum + Number(i.amount), 0)
         : 0;
@@ -77,7 +76,7 @@ Deno.serve(async (req) => {
         .eq("referred_by", profile.referral_code)
         .eq("is_active", true);
 
-      // 3. Get team volume (direct referrals' active investments)
+      // 3. Get team volume
       const { data: downline } = await supabase
         .from("profiles")
         .select("user_id")
@@ -94,8 +93,8 @@ Deno.serve(async (req) => {
         if (invs) teamVolume = invs.reduce((sum: number, i: any) => sum + Number(i.amount), 0);
       }
 
-      // Find highest qualifying rank
-      let newRank = profile.rank || "unranked";
+      // Find highest qualifying rank (or null if none qualify)
+      let newRank: string | null = null;
       for (const rank of RANKS) {
         if (
           personalInvestment >= rank.personalInvestment &&
@@ -106,30 +105,53 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Only upgrade, never downgrade
-      const currentIdx = RANK_ORDER.indexOf(profile.rank || "unranked");
-      const newIdx = RANK_ORDER.indexOf(newRank);
+      const currentRank = profile.rank || null;
 
-      if (newIdx > currentIdx) {
+      // Update if rank changed (both upgrade AND downgrade)
+      if (newRank !== currentRank) {
+        const currentIdx = currentRank ? RANK_ORDER.indexOf(currentRank) : -1;
+        const newIdx = newRank ? RANK_ORDER.indexOf(newRank) : -1;
+
         await supabase
           .from("profiles")
           .update({ rank: newRank })
           .eq("user_id", profile.user_id);
 
-        const rankLabel = RANKS.find(r => r.name === newRank)?.label || newRank;
-        await supabase.from("notifications").insert({
-          user_id: profile.user_id,
-          title: "🎉 Rank Upgraded!",
-          message: `Congratulations! You've been promoted to ${rankLabel} rank.`,
-          type: "success",
-        });
-
-        upgraded++;
+        if (newIdx > currentIdx) {
+          // Upgraded
+          const rankLabel = RANKS.find(r => r.name === newRank)?.label || newRank;
+          await supabase.from("notifications").insert({
+            user_id: profile.user_id,
+            title: "🎉 Rank Upgraded!",
+            message: `Congratulations! You've been promoted to ${rankLabel} rank.`,
+            type: "success",
+          });
+          upgraded++;
+        } else {
+          // Downgraded
+          if (newRank) {
+            const rankLabel = RANKS.find(r => r.name === newRank)?.label || newRank;
+            await supabase.from("notifications").insert({
+              user_id: profile.user_id,
+              title: "📉 Rank Updated",
+              message: `Your rank has been adjusted to ${rankLabel}. Keep building to rank up!`,
+              type: "info",
+            });
+          } else {
+            await supabase.from("notifications").insert({
+              user_id: profile.user_id,
+              title: "📉 Rank Removed",
+              message: `You no longer meet the requirements for any rank. Keep building to earn a rank!`,
+              type: "info",
+            });
+          }
+          downgraded++;
+        }
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, processed: profiles?.length || 0, upgraded }),
+      JSON.stringify({ success: true, processed: profiles?.length || 0, upgraded, downgraded }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
