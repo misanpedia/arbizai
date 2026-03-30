@@ -59,7 +59,7 @@ const Rank = () => {
         .maybeSingle();
 
       if (profile) {
-        setCurrentRank(profile.rank || "unranked");
+        setCurrentRank(profile.rank || null);
 
         const [refRes, downlineRes, personalRes] = await Promise.all([
           supabase.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", profile.referral_code).eq("is_active", true),
