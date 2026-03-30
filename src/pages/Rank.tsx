@@ -33,7 +33,7 @@ const RANK_COLORS: Record<string, string> = {
 
 const Rank = () => {
   const { user } = useAuth();
-  const [currentRank, setCurrentRank] = useState("unranked");
+  const [currentRank, setCurrentRank] = useState<string | null>(null);
   const [ranks, setRanks] = useState<RankInfo[]>(DEFAULT_RANKS);
   const [userStats, setUserStats] = useState({ referrals: 0, teamVolume: 0, personalInvestment: 0 });
 
