@@ -90,7 +90,7 @@ const Rank = () => {
       <div className="max-w-lg mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-strong rounded-2xl p-6 text-center">
           <Award className={`w-12 h-12 mx-auto mb-3 ${currentIdx >= 0 ? (RANK_COLORS[ranks[currentIdx].name] || "text-primary") : "text-muted-foreground"}`} />
-          <h2 className="text-2xl font-display font-bold text-foreground capitalize">{currentRank === "unranked" ? "No Rank" : currentRank}</h2>
+          <h2 className="text-2xl font-display font-bold text-foreground capitalize">{!currentRank ? "No Rank" : currentRank}</h2>
           <p className="text-sm text-muted-foreground mt-1">Your Current Rank</p>
           {currentIdx >= 0 && (
             <p className="text-xs text-success mt-2 font-medium">${ranks[currentIdx].weeklyCommission}/week commission</p>
