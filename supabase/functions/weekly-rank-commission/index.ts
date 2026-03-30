@@ -7,31 +7,31 @@ const corsHeaders = {
 
 interface RankDef {
   name: string;
+  personalInvestment: number;
+  referrals: number;
+  volume: number;
   weeklyCommission: number;
 }
 
 const DEFAULT_RANKS: RankDef[] = [
-  { name: "bronze",  weeklyCommission: 10 },
-  { name: "silver",  weeklyCommission: 20 },
-  { name: "gold",    weeklyCommission: 50 },
-  { name: "diamond", weeklyCommission: 100 },
-  { name: "emerald", weeklyCommission: 250 },
-  { name: "ruby",    weeklyCommission: 500 },
-  { name: "crown",   weeklyCommission: 1000 },
-  { name: "legend",  weeklyCommission: 5000 },
+  { name: "bronze",  personalInvestment: 100,  referrals: 5,   volume: 1000,    weeklyCommission: 10 },
+  { name: "silver",  personalInvestment: 200,  referrals: 10,  volume: 2500,    weeklyCommission: 20 },
+  { name: "gold",    personalInvestment: 250,  referrals: 15,  volume: 5000,    weeklyCommission: 50 },
+  { name: "diamond", personalInvestment: 500,  referrals: 30,  volume: 10000,   weeklyCommission: 100 },
+  { name: "emerald", personalInvestment: 1000, referrals: 60,  volume: 25000,   weeklyCommission: 250 },
+  { name: "ruby",    personalInvestment: 1500, referrals: 100, volume: 50000,   weeklyCommission: 500 },
+  { name: "crown",   personalInvestment: 2000, referrals: 200, volume: 100000,  weeklyCommission: 1000 },
+  { name: "legend",  personalInvestment: 2500, referrals: 500, volume: 500000,  weeklyCommission: 5000 },
 ];
 
-async function loadRankWeekly(supabase: any): Promise<Record<string, number>> {
+async function loadRanks(supabase: any): Promise<RankDef[]> {
   const { data } = await supabase
     .from("system_settings")
     .select("value")
     .eq("key", "rank_config")
     .maybeSingle();
-
-  const ranks = (data?.value && Array.isArray(data.value)) ? data.value as RankDef[] : DEFAULT_RANKS;
-  const map: Record<string, number> = {};
-  ranks.forEach(r => { map[r.name] = r.weeklyCommission; });
-  return map;
+  if (data?.value && Array.isArray(data.value)) return data.value as RankDef[];
+  return DEFAULT_RANKS;
 }
 
 Deno.serve(async (req) => {
@@ -44,23 +44,76 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const RANK_WEEKLY = await loadRankWeekly(supabase);
-    const today = new Date().toISOString().split("T")[0];
+    const RANKS = await loadRanks(supabase);
+    const rankMap: Record<string, RankDef> = {};
+    RANKS.forEach(r => { rankMap[r.name] = r; });
 
-    // Get all active profiles with a rank
+    // Get all active profiles with a non-null rank
     const { data: profiles, error } = await supabase
       .from("profiles")
-      .select("user_id, rank")
-      .eq("is_active", true);
+      .select("user_id, rank, referral_code")
+      .eq("is_active", true)
+      .not("rank", "is", null);
 
     if (error) throw error;
 
     let paid = 0;
+    let skipped = 0;
     let totalPaid = 0;
 
     for (const profile of profiles || []) {
-      const weeklyAmount = RANK_WEEKLY[profile.rank || ""];
-      if (!weeklyAmount) continue;
+      const rankDef = rankMap[profile.rank || ""];
+      if (!rankDef) continue;
+
+      // VALIDATE QUALIFICATION: check if user actually meets rank requirements
+      // 1. Personal active investment
+      const { data: personalInvs } = await supabase
+        .from("investments")
+        .select("amount")
+        .eq("user_id", profile.user_id)
+        .eq("status", "active");
+      const personalInvestment = personalInvs
+        ? personalInvs.reduce((sum: number, i: any) => sum + Number(i.amount), 0)
+        : 0;
+
+      if (personalInvestment < rankDef.personalInvestment) {
+        skipped++;
+        continue;
+      }
+
+      // 2. Direct active referrals
+      const { count: refCount } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("referred_by", profile.referral_code)
+        .eq("is_active", true);
+
+      if ((refCount || 0) < rankDef.referrals) {
+        skipped++;
+        continue;
+      }
+
+      // 3. Team volume
+      const { data: downline } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("referred_by", profile.referral_code);
+
+      let teamVolume = 0;
+      if (downline && downline.length > 0) {
+        const ids = downline.map((d: any) => d.user_id);
+        const { data: invs } = await supabase
+          .from("investments")
+          .select("amount")
+          .in("user_id", ids)
+          .eq("status", "active");
+        if (invs) teamVolume = invs.reduce((sum: number, i: any) => sum + Number(i.amount), 0);
+      }
+
+      if (teamVolume < rankDef.volume) {
+        skipped++;
+        continue;
+      }
 
       // Check if already paid this week
       const { data: existing } = await supabase
@@ -76,9 +129,9 @@ Deno.serve(async (req) => {
       // Insert commission record
       await supabase.from("commissions").insert({
         user_id: profile.user_id,
-        amount: weeklyAmount,
+        amount: rankDef.weeklyCommission,
         type: "rank_weekly",
-        description: `${(profile.rank || "").charAt(0).toUpperCase() + (profile.rank || "").slice(1)} rank weekly commission`,
+        description: `${rankDef.name.charAt(0).toUpperCase() + rankDef.name.slice(1)} rank weekly commission`,
         level: 0,
       });
 
@@ -93,17 +146,17 @@ Deno.serve(async (req) => {
       if (wallet) {
         await supabase
           .from("wallets")
-          .update({ balance: Number(wallet.balance) + weeklyAmount })
+          .update({ balance: Number(wallet.balance) + rankDef.weeklyCommission })
           .eq("user_id", profile.user_id)
           .eq("currency", "USDT");
       }
 
       paid++;
-      totalPaid += weeklyAmount;
+      totalPaid += rankDef.weeklyCommission;
     }
 
     return new Response(
-      JSON.stringify({ success: true, paid, totalPaid }),
+      JSON.stringify({ success: true, paid, skipped, totalPaid }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
