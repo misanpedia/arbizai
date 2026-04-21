@@ -159,11 +159,10 @@ const AdminReferral = () => {
           </div>
         </div>
 
-        {/* Rebate Rates Card */}
         <div className="glass-strong rounded-xl p-4">
-            <GitBranch className="w-5 h-5 text-accent mb-2" />
-            <p className="text-xs text-muted-foreground">Rebate Rates (20 Levels - Daily Profit)</p>
-            {editingRebateRates ? (
+          <GitBranch className="w-5 h-5 text-accent mb-2" />
+          <p className="text-xs text-muted-foreground">Rebate Rates (20 Levels - Daily Profit)</p>
+          {editingRebateRates ? (
               <div className="space-y-1 mt-1">
                 <div className="grid grid-cols-4 gap-1">
                   {rebateRates.map((rate, i) => (
@@ -185,8 +184,7 @@ const AdminReferral = () => {
                   <Button size="sm" variant="ghost" onClick={() => setEditingRebateRates(false)} className="h-6 text-[10px] px-2">
                     <X className="w-3 h-3" />
                   </Button>
-                </div>
-              </div>
+          </div>
             ) : (
               <div className="flex items-center gap-1 mt-1 flex-wrap">
                 <p className="text-[10px] font-medium text-foreground">
