@@ -266,6 +266,20 @@ const AdminReferral = () => {
 
         <div className="glass-strong rounded-2xl p-5">
           <h3 className="font-display font-semibold text-foreground mb-4">Recent Commissions</h3>
+          {/* CSV Export */}
+          <div className="flex flex-wrap items-end gap-2 mb-4 p-3 bg-muted/30 rounded-xl">
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-0.5">From</label>
+              <Input type="date" value={csvFrom} onChange={e => setCsvFrom(e.target.value)} className="h-7 text-xs w-36" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-0.5">To</label>
+              <Input type="date" value={csvTo} onChange={e => setCsvTo(e.target.value)} className="h-7 text-xs w-36" />
+            </div>
+            <Button size="sm" onClick={handleExportCSV} disabled={exporting} className="h-7 text-xs px-3">
+              <Download className="w-3 h-3 mr-1" /> {exporting ? "Exporting..." : "Export CSV"}
+            </Button>
+          </div>
           <div className="space-y-2">
             {commissions.map(c => (
               <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
