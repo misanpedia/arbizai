@@ -184,7 +184,8 @@ const AdminReferral = () => {
                   <Button size="sm" variant="ghost" onClick={() => setEditingRebateRates(false)} className="h-6 text-[10px] px-2">
                     <X className="w-3 h-3" />
                   </Button>
-          </div>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center gap-1 mt-1 flex-wrap">
                 <p className="text-[10px] font-medium text-foreground">
