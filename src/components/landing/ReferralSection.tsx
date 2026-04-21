@@ -1,13 +1,9 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Users, TrendingUp, Award, Layers, DollarSign, Trophy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const referralLevels = [
-  { level: 1, rate: "5%" },
-  { level: 2, rate: "3%" },
-  { level: 3, rate: "2%" },
-  { level: 4, rate: "1%" },
-  { level: 5, rate: "0.5%" },
-];
+const DEFAULT_REFERRAL_RATES = [5, 3, 2, 1, 0.5];
 
 const rebateLevels = [
   { level: 1, rate: "10%" },
@@ -16,6 +12,19 @@ const rebateLevels = [
 ];
 
 export function ReferralSection() {
+  const [referralRates, setReferralRates] = useState(DEFAULT_REFERRAL_RATES);
+
+  useEffect(() => {
+    supabase
+      .from("system_settings")
+      .select("value")
+      .eq("key", "referral_commission_rates")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value && Array.isArray(data.value)) setReferralRates((data.value as number[]).map(Number));
+      });
+  }, []);
+
   return (
     <section className="py-24" id="referral">
       <div className="container px-4">
@@ -51,10 +60,10 @@ export function ReferralSection() {
               </div>
             </div>
             <div className="space-y-2">
-              {referralLevels.map((item, i) => (
+              {referralRates.slice(0, 5).map((rate, i) => (
                 <div key={i} className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-2.5">
-                  <span className="text-sm text-muted-foreground">Level {item.level}</span>
-                  <span className="font-display font-bold text-foreground">{item.rate}</span>
+                  <span className="text-sm text-muted-foreground">Level {i + 1}</span>
+                  <span className="font-display font-bold text-foreground">{rate}%</span>
                 </div>
               ))}
             </div>
