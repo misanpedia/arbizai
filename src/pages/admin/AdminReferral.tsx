@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { GitBranch, Users, DollarSign, Edit2, Save, X, Search, ArrowUpDown } from "lucide-react";
+import { GitBranch, Users, DollarSign, Edit2, Save, X, Search, ArrowUpDown, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,9 @@ const AdminReferral = () => {
   const [editName, setEditName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [changeUplineProfile, setChangeUplineProfile] = useState<any | null>(null);
+  const [csvFrom, setCsvFrom] = useState("");
+  const [csvTo, setCsvTo] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   const handleUplineChanged = (profileId: string, newUplineId: string | null) => {
     setProfiles(prev => prev.map(p => p.id === profileId ? { ...p, referred_by: newUplineId } : p));
@@ -97,6 +100,39 @@ const AdminReferral = () => {
       setEditingReferralRates(false);
     }
     setSavingRates(false);
+  };
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    let query = supabase.from("commissions").select("*").eq("type", "referral").order("created_at", { ascending: false }).limit(5000);
+    if (csvFrom) query = query.gte("created_at", new Date(csvFrom).toISOString());
+    if (csvTo) query = query.lte("created_at", new Date(csvTo + "T23:59:59").toISOString());
+    const { data } = await query;
+    if (data && data.length > 0) {
+      const header = "Date,Recipient,From User,Level,Rate,Amount,Description\n";
+      const rows = data.map(c => {
+        const rateMatch = c.description?.match(/\(([0-9.]+)%\)/);
+        const rate = rateMatch ? rateMatch[1] : "";
+        return [
+          new Date(c.created_at).toISOString().slice(0, 19),
+          getUserName(c.user_id),
+          getUserName(c.from_user_id),
+          c.level,
+          rate + "%",
+          Number(c.amount).toFixed(4),
+          `"${(c.description || "").replace(/"/g, '""')}"`,
+        ].join(",");
+      }).join("\n");
+      const blob = new Blob([header + rows], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `referral-commissions-${csvFrom || "all"}-${csvTo || "now"}.csv`;
+      a.click(); URL.revokeObjectURL(url);
+      toast({ title: `Exported ${data.length} records` });
+    } else {
+      toast({ title: "No data", description: "No referral commissions found for the selected period", variant: "destructive" });
+    }
+    setExporting(false);
   };
 
   const handleEditProfile = (profile: any) => {
