@@ -114,7 +114,7 @@ const AdminReferral = () => {
   return (
     <AdminLayout title="Referral Network">
       <div className="space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <div className="glass-strong rounded-xl p-4">
             <Users className="w-5 h-5 text-primary mb-2" />
             <p className="text-xs text-muted-foreground">Referred Users</p>
@@ -125,29 +125,32 @@ const AdminReferral = () => {
             <p className="text-xs text-muted-foreground">Total Commissions</p>
             <p className="text-lg font-display font-bold text-foreground">${stats.totalCommissions.toFixed(2)}</p>
           </div>
-          <div className="glass-strong rounded-xl p-4">
+          <div className="glass-strong rounded-xl p-4 col-span-1 sm:col-span-2 md:col-span-2">
             <DollarSign className="w-5 h-5 text-success mb-2" />
             <p className="text-xs text-muted-foreground">Referral Rates (5 Levels - Deposit)</p>
             {editingReferralRates ? (
-              <div className="space-y-1 mt-1">
-                <div className="grid grid-cols-5 gap-1">
+              <div className="space-y-2 mt-2">
+                <div className="grid grid-cols-5 gap-2">
                   {referralRates.map((rate, i) => (
-                    <div key={i} className="flex items-center gap-0.5">
-                      <span className="text-[9px] text-muted-foreground w-5">L{i + 1}</span>
-                      <Input type="number" value={rate} onChange={e => {
+                    <div key={i} className="flex flex-col items-center gap-0.5">
+                      <span className="text-[10px] text-muted-foreground font-medium">L{i + 1}</span>
+                      <Input type="text" inputMode="decimal" value={rate} onChange={e => {
+                        const val = e.target.value;
+                        if (val === '' || /^[0-9]*[.,]?[0-9]*$/.test(val)) {
                         const newRates = [...referralRates];
-                        newRates[i] = Number(e.target.value);
+                          newRates[i] = val === '' ? 0 : Number(val.replace(',', '.'));
                         setReferralRates(newRates);
-                      }} className="h-6 text-xs w-14" step="0.1" />
+                        }
+                      }} className="h-7 text-xs text-center w-full" />
                       <span className="text-[9px] text-muted-foreground">%</span>
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-1 mt-1">
-                  <Button size="sm" onClick={handleSaveReferralRates} disabled={savingRates} className="h-6 text-[10px] px-2">
+                <div className="flex gap-2 mt-1">
+                  <Button size="sm" onClick={handleSaveReferralRates} disabled={savingRates} className="h-7 text-xs px-3">
                     <Save className="w-3 h-3 mr-1" /> Save
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditingReferralRates(false)} className="h-6 text-[10px] px-2">
+                  <Button size="sm" variant="ghost" onClick={() => setEditingReferralRates(false)} className="h-7 text-xs px-3">
                     <X className="w-3 h-3" />
                   </Button>
                 </div>
