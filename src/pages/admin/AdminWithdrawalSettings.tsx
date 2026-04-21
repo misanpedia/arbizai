@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Save, AlertTriangle, DollarSign, Clock, Bell, Shield, Percent } from "lucide-react";
+import { Save, AlertTriangle, DollarSign, Clock, Bell, Shield } from "lucide-react";
 
 interface WithdrawalConfig {
   withdrawal_fee_rate: number;
@@ -16,7 +16,6 @@ interface WithdrawalConfig {
   withdrawal_auto_approve: boolean;
   withdrawal_auto_approve_limit: number;
   withdrawal_cooldown_hours: number;
-  principal_penalty_rate: number;
 }
 
 const defaultConfig: WithdrawalConfig = {
@@ -28,7 +27,6 @@ const defaultConfig: WithdrawalConfig = {
   withdrawal_auto_approve: false,
   withdrawal_auto_approve_limit: 100,
   withdrawal_cooldown_hours: 24,
-  principal_penalty_rate: 0.10,
 };
 
 const AdminWithdrawalSettings = () => {
@@ -47,7 +45,7 @@ const AdminWithdrawalSettings = () => {
     const { data } = await supabase.from("system_settings").select("key, value").in("key", [
       "withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount",
       "withdrawal_enabled", "withdrawal_notify_admin", "withdrawal_auto_approve",
-      "withdrawal_auto_approve_limit", "withdrawal_cooldown_hours", "withdrawal_principal_penalty_rate",
+      "withdrawal_auto_approve_limit", "withdrawal_cooldown_hours",
     ]);
     if (data && data.length > 0) {
       const map: Record<string, any> = {};
@@ -61,7 +59,6 @@ const AdminWithdrawalSettings = () => {
         withdrawal_auto_approve: map.withdrawal_auto_approve ?? defaultConfig.withdrawal_auto_approve,
         withdrawal_auto_approve_limit: map.withdrawal_auto_approve_limit ?? defaultConfig.withdrawal_auto_approve_limit,
         withdrawal_cooldown_hours: map.withdrawal_cooldown_hours ?? defaultConfig.withdrawal_cooldown_hours,
-        principal_penalty_rate: map.withdrawal_principal_penalty_rate ?? defaultConfig.principal_penalty_rate,
       });
     }
     setLoading(false);
@@ -91,7 +88,6 @@ const AdminWithdrawalSettings = () => {
       { key: "withdrawal_auto_approve", value: config.withdrawal_auto_approve },
       { key: "withdrawal_auto_approve_limit", value: config.withdrawal_auto_approve_limit },
       { key: "withdrawal_cooldown_hours", value: config.withdrawal_cooldown_hours },
-      { key: "withdrawal_principal_penalty_rate", value: config.principal_penalty_rate },
     ];
     for (const s of settings) {
       await supabase.from("system_settings").upsert(
@@ -180,16 +176,6 @@ const AdminWithdrawalSettings = () => {
           <div className="flex items-center justify-between">
             <div><p className="text-sm font-medium text-foreground">Notify Admin on New Withdrawal</p><p className="text-[10px] text-muted-foreground">Send notification to admin when a new withdrawal request is submitted</p></div>
             <Switch checked={config.withdrawal_notify_admin} onCheckedChange={v => setConfig({ ...config, withdrawal_notify_admin: v })} />
-          </div>
-        </div>
-
-        {/* Principal Penalty */}
-        <div className="glass-strong rounded-2xl p-5 space-y-4">
-          <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><Percent className="w-4 h-4 text-destructive" /> Principal Withdrawal Penalty</h3>
-          <p className="text-[10px] text-muted-foreground">Flat penalty rate applied to all principal/deposit withdrawals regardless of time.</p>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Penalty Rate (%)</label>
-            <Input type="number" step="0.1" value={(config.principal_penalty_rate * 100).toFixed(1)} onChange={e => setConfig({ ...config, principal_penalty_rate: Number(e.target.value) / 100 })} className="max-w-xs" />
           </div>
         </div>
 
