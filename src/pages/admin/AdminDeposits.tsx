@@ -225,15 +225,11 @@ const AdminDeposits = () => {
                   </div>
                 )}
 
-                {/* Actions - hide for NOWPayments deposits (auto-confirmed via webhook) */}
-                {d.status === "pending" && !(meta?.nowpayments_invoice_id || (d.description && d.description.includes("NOWPayments"))) && (
+                {d.status === "pending" && (
                   <div className="flex gap-2 mt-3">
                     <Button size="sm" onClick={() => handleAction(d.id, "approved")} className="flex-1 bg-success/10 text-success hover:bg-success/20 h-8 text-xs"><Check className="w-3 h-3 mr-1" />Approve</Button>
                     <Button size="sm" variant="outline" onClick={() => handleAction(d.id, "rejected")} className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 h-8 text-xs"><X className="w-3 h-3 mr-1" />Reject</Button>
                   </div>
-                )}
-                {d.status === "pending" && (meta?.nowpayments_invoice_id || (d.description && d.description.includes("NOWPayments"))) && (
-                  <p className="text-[10px] text-muted-foreground mt-3 italic">⏳ Menunggu konfirmasi otomatis dari payment gateway...</p>
                 )}
               </div>
             );
