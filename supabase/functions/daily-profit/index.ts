@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// 20-level rebate rates (percentage of downline's daily profit)
 const DEFAULT_REBATE_RATES: Record<number, number> = {
   1: 10,
   2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2,
@@ -24,35 +23,47 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    // Get all active investments with plan details
     const { data: investments, error: invError } = await supabase
       .from("investments")
-      .select("id, user_id, amount, plan_id, auto_compound, investment_plans(daily_profit_min, daily_profit_max)")
+      .select("id, user_id, amount, plan_id, auto_compound, total_profit, max_roi, investment_plans(daily_profit_min, daily_profit_max)")
       .eq("status", "active");
 
     if (invError) throw invError;
 
     let processed = 0;
     let totalDistributed = 0;
+    let completed = 0;
 
-    // Get commission settings (overrides)
-    const { data: settingsData } = await supabase
+    // Get rebate commission settings
+    const { data: ratesData } = await supabase
       .from("system_settings")
-      .select("key, value")
-      .like("key", "commission_l%");
+      .select("value")
+      .eq("key", "commission_rates")
+      .maybeSingle();
 
     const commRates: Record<number, number> = { ...DEFAULT_REBATE_RATES };
-    settingsData?.forEach((s: any) => {
-      const level = parseInt(s.key.replace("commission_l", ""));
-      const val = typeof s.value === "string" ? parseFloat(s.value.replace(/"/g, "")) : Number(s.value);
-      if (!isNaN(level) && !isNaN(val)) commRates[level] = val;
-    });
+    if (ratesData?.value && Array.isArray(ratesData.value)) {
+      (ratesData.value as number[]).forEach((rate, i) => {
+        commRates[i + 1] = Number(rate);
+      });
+    }
 
     for (const inv of investments || []) {
       const plan = (inv as any).investment_plans;
       if (!plan) continue;
 
-      // Check if profit already generated today for this investment
+      const currentTotalProfit = Number(inv.total_profit || 0);
+      const maxRoi = Number(inv.max_roi || inv.amount * 3);
+
+      // Check if 300% ROI already reached
+      if (currentTotalProfit >= maxRoi) {
+        // Mark as completed
+        await supabase.from("investments").update({ status: "completed" }).eq("id", inv.id);
+        completed++;
+        continue;
+      }
+
+      // Check if profit already generated today
       const { data: existing } = await supabase
         .from("profits")
         .select("id")
@@ -62,11 +73,16 @@ Deno.serve(async (req) => {
 
       if (existing) continue;
 
-      // Random daily rate between min and max
       const minRate = Number(plan.daily_profit_min) / 100;
       const maxRate = Number(plan.daily_profit_max) / 100;
       const rate = minRate + Math.random() * (maxRate - minRate);
-      const profitAmount = Number(inv.amount) * rate;
+      let profitAmount = Number(inv.amount) * rate;
+
+      // Cap profit to not exceed 300% ROI
+      const remaining = maxRoi - currentTotalProfit;
+      if (profitAmount > remaining) {
+        profitAmount = remaining;
+      }
 
       // Insert profit record
       await supabase.from("profits").insert({
@@ -76,11 +92,21 @@ Deno.serve(async (req) => {
         profit_date: today,
       });
 
-      // Credit to wallet
-      if (inv.auto_compound) {
+      // Update total_profit on investment
+      const newTotal = currentTotalProfit + profitAmount;
+      const updateData: any = { total_profit: newTotal };
+      if (newTotal >= maxRoi) {
+        updateData.status = "completed";
+        completed++;
+      }
+      await supabase.from("investments").update(updateData).eq("id", inv.id);
+
+      // Credit to wallet (no auto-compound to investment amount anymore since no principal withdrawal)
+      if (inv.auto_compound && newTotal < maxRoi) {
+        // Auto-compound adds to investment amount (increases daily profit base)
         await supabase
           .from("investments")
-          .update({ amount: Number(inv.amount) + profitAmount })
+          .update({ amount: Number(inv.amount) + profitAmount, max_roi: (Number(inv.amount) + profitAmount) * 3 })
           .eq("id", inv.id);
       } else {
         const { data: wallet } = await supabase
@@ -99,7 +125,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Distribute 20-level rebate commissions (based on downline's daily profit)
+      // Distribute 20-level rebate commissions
       const { data: profile } = await supabase
         .from("profiles")
         .select("referred_by")
@@ -110,10 +136,7 @@ Deno.serve(async (req) => {
         let currentReferralCode = profile.referred_by;
         for (let level = 1; level <= 20; level++) {
           const rebatePercent = commRates[level];
-          if (!rebatePercent || rebatePercent <= 0) {
-            if (level > 20) break;
-            continue;
-          }
+          if (!rebatePercent || rebatePercent <= 0) continue;
 
           const { data: upline } = await supabase
             .from("profiles")
@@ -125,7 +148,6 @@ Deno.serve(async (req) => {
 
           const commission = profitAmount * (rebatePercent / 100);
 
-          // Insert commission record
           await supabase.from("commissions").insert({
             user_id: upline.user_id,
             from_user_id: inv.user_id,
@@ -135,7 +157,6 @@ Deno.serve(async (req) => {
             description: `L${level} rebate (${rebatePercent}%) from daily profit`,
           });
 
-          // Credit commission to upline wallet
           const { data: uplineWallet } = await supabase
             .from("wallets")
             .select("balance")
@@ -160,17 +181,16 @@ Deno.serve(async (req) => {
       processed++;
     }
 
-    // Log the execution
     await supabase.from("profit_engine_logs").insert({
       run_date: today,
       status: "completed",
       total_users: processed,
       total_profit_distributed: totalDistributed,
-      details: { processed, total: investments?.length || 0 },
+      details: { processed, total: investments?.length || 0, completed_roi: completed },
     });
 
     return new Response(
-      JSON.stringify({ success: true, processed, total: investments?.length || 0, totalDistributed }),
+      JSON.stringify({ success: true, processed, total: investments?.length || 0, totalDistributed, completed_roi: completed }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {

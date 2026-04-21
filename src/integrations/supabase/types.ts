@@ -171,8 +171,10 @@ export type Database = {
           bonus_used: number | null
           created_at: string | null
           id: string
+          max_roi: number | null
           plan_id: string
           status: string | null
+          total_profit: number | null
           updated_at: string | null
           user_id: string
         }
@@ -182,8 +184,10 @@ export type Database = {
           bonus_used?: number | null
           created_at?: string | null
           id?: string
+          max_roi?: number | null
           plan_id: string
           status?: string | null
+          total_profit?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -193,8 +197,10 @@ export type Database = {
           bonus_used?: number | null
           created_at?: string | null
           id?: string
+          max_roi?: number | null
           plan_id?: string
           status?: string | null
+          total_profit?: number | null
           updated_at?: string | null
           user_id?: string
         }

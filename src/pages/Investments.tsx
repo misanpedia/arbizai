@@ -77,9 +77,25 @@ const Investments = () => {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Earned</p>
-                    <p className="text-sm font-bold text-success">${Number(inv.total_profit).toFixed(2)}</p>
+                    <p className="text-sm font-bold text-success">${Number(inv.total_profit || 0).toFixed(2)}</p>
                   </div>
                 </div>
+
+                {/* ROI Progress */}
+                {inv.status === "active" && Number(inv.max_roi) > 0 && (
+                  <div className="mt-2">
+                    <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                      <span>ROI Progress</span>
+                      <span>{((Number(inv.total_profit || 0) / Number(inv.max_roi)) * 100).toFixed(1)}% of 300%</span>
+                    </div>
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-primary to-success rounded-full transition-all" style={{ width: `${Math.min(100, (Number(inv.total_profit || 0) / Number(inv.max_roi)) * 100)}%` }} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      ${Number(inv.total_profit || 0).toFixed(2)} / ${Number(inv.max_roi).toFixed(2)} (Max 300%)
+                    </p>
+                </div>
+                )}
 
                 {/* Auto-Compound Toggle */}
                 {inv.status === "active" && (

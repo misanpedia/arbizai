@@ -78,17 +78,20 @@ const AdminDeposits = () => {
   const handleAction = async (id: string, action: "approved" | "rejected") => {
     const tx = deposits.find(d => d.id === id);
     if (action === "approved" && tx) {
-      const { error: rpcError } = await supabase.functions.invoke("admin-wallet-op", {
-        body: { op: "credit", user_id: tx.user_id, currency: tx.currency, amount: Number(tx.amount) },
+      const { data: result, error: rpcError } = await supabase.functions.invoke("approve-deposit", {
+        body: { transaction_id: tx.id },
       });
-      if (rpcError) {
-        toast({ title: "Error crediting wallet", description: rpcError.message, variant: "destructive" });
+      if (rpcError || result?.error) {
+        toast({ title: "Error", description: result?.error || rpcError?.message || "Failed to approve", variant: "destructive" });
         return;
       }
     }
-    const { error } = await supabase.from("transactions").update({ status: action }).eq("id", id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: `Deposit ${action}` }); fetchDeposits(); }
+    if (action === "rejected") {
+      const { error } = await supabase.from("transactions").update({ status: action }).eq("id", id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    }
+    toast({ title: `Deposit ${action}` });
+    fetchDeposits();
   };
 
   const getMetadata = (d: any) => {
@@ -225,15 +228,11 @@ const AdminDeposits = () => {
                   </div>
                 )}
 
-                {/* Actions - hide for NOWPayments deposits (auto-confirmed via webhook) */}
-                {d.status === "pending" && !(meta?.nowpayments_invoice_id || (d.description && d.description.includes("NOWPayments"))) && (
+                {d.status === "pending" && (
                   <div className="flex gap-2 mt-3">
                     <Button size="sm" onClick={() => handleAction(d.id, "approved")} className="flex-1 bg-success/10 text-success hover:bg-success/20 h-8 text-xs"><Check className="w-3 h-3 mr-1" />Approve</Button>
                     <Button size="sm" variant="outline" onClick={() => handleAction(d.id, "rejected")} className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 h-8 text-xs"><X className="w-3 h-3 mr-1" />Reject</Button>
                   </div>
-                )}
-                {d.status === "pending" && (meta?.nowpayments_invoice_id || (d.description && d.description.includes("NOWPayments"))) && (
-                  <p className="text-[10px] text-muted-foreground mt-3 italic">⏳ Menunggu konfirmasi otomatis dari payment gateway...</p>
                 )}
               </div>
             );

@@ -7,15 +7,18 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ChangeUplineDialog } from "@/components/admin/ChangeUplineDialog";
 
-const DEFAULT_RATES = [10, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+const DEFAULT_REBATE_RATES = [10, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+const DEFAULT_REFERRAL_RATES = [5, 3, 2, 1, 0.5];
 
 const AdminReferral = () => {
   const { toast } = useToast();
   const [commissions, setCommissions] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalCommissions: 0, totalUsers: 0 });
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [editingRates, setEditingRates] = useState(false);
-  const [rates, setRates] = useState<number[]>(DEFAULT_RATES);
+  const [editingRebateRates, setEditingRebateRates] = useState(false);
+  const [rebateRates, setRebateRates] = useState<number[]>(DEFAULT_REBATE_RATES);
+  const [editingReferralRates, setEditingReferralRates] = useState(false);
+  const [referralRates, setReferralRates] = useState<number[]>(DEFAULT_REFERRAL_RATES);
   const [savingRates, setSavingRates] = useState(false);
   const [editingProfile, setEditingProfile] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -28,10 +31,11 @@ const AdminReferral = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [comRes, profRes, ratesRes] = await Promise.all([
+      const [comRes, profRes, rebateRatesRes, refRatesRes] = await Promise.all([
         supabase.from("commissions").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("profiles").select("id, user_id, full_name, referral_code, referred_by, rank").order("created_at", { ascending: false }),
-        supabase.from("system_settings").select("value").eq("key", "commission_rates").single(),
+        supabase.from("system_settings").select("value").eq("key", "commission_rates").maybeSingle(),
+        supabase.from("system_settings").select("value").eq("key", "referral_commission_rates").maybeSingle(),
       ]);
       if (comRes.data) {
         setCommissions(comRes.data);
@@ -41,8 +45,11 @@ const AdminReferral = () => {
         setProfiles(profRes.data);
         setStats(prev => ({ ...prev, totalUsers: profRes.data!.filter(p => p.referred_by).length }));
       }
-      if (ratesRes.data && Array.isArray(ratesRes.data.value)) {
-        setRates((ratesRes.data.value as number[]).map(Number));
+      if (rebateRatesRes.data && Array.isArray(rebateRatesRes.data.value)) {
+        setRebateRates((rebateRatesRes.data.value as number[]).map(Number));
+      }
+      if (refRatesRes.data && Array.isArray(refRatesRes.data.value)) {
+        setReferralRates((refRatesRes.data.value as number[]).map(Number));
       }
     };
     fetchData();
@@ -64,16 +71,25 @@ const AdminReferral = () => {
     return filteredProfiles;
   }, [filteredProfiles, profiles, searchQuery]);
 
-  const handleSaveRates = async () => {
+  const handleSaveRebateRates = async () => {
     setSavingRates(true);
-    const { data: existing } = await supabase.from("system_settings").select("id").eq("key", "commission_rates").single();
-    if (existing) {
-      await supabase.from("system_settings").update({ value: rates as any }).eq("key", "commission_rates");
-    } else {
-      await supabase.from("system_settings").insert({ key: "commission_rates", value: rates as any });
-    }
-    toast({ title: "Commission rates saved!" });
-    setEditingRates(false);
+    await supabase.from("system_settings").upsert(
+      { key: "commission_rates", value: rebateRates as any, updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+    toast({ title: "Rebate rates saved!" });
+    setEditingRebateRates(false);
+    setSavingRates(false);
+  };
+
+  const handleSaveReferralRates = async () => {
+    setSavingRates(true);
+    await supabase.from("system_settings").upsert(
+      { key: "referral_commission_rates", value: referralRates as any, updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+    toast({ title: "Referral commission rates saved!" });
+    setEditingReferralRates(false);
     setSavingRates(false);
   };
 
@@ -103,29 +119,29 @@ const AdminReferral = () => {
             <p className="text-xs text-muted-foreground">Total Commissions</p>
             <p className="text-lg font-display font-bold text-foreground">${stats.totalCommissions.toFixed(2)}</p>
           </div>
-          <div className="glass-strong rounded-xl p-4 col-span-2 md:col-span-1">
-            <GitBranch className="w-5 h-5 text-accent mb-2" />
-            <p className="text-xs text-muted-foreground">Rebate Rates (20 Levels)</p>
-            {editingRates ? (
+          <div className="glass-strong rounded-xl p-4">
+            <DollarSign className="w-5 h-5 text-success mb-2" />
+            <p className="text-xs text-muted-foreground">Referral Rates (5 Levels - Deposit)</p>
+            {editingReferralRates ? (
               <div className="space-y-1 mt-1">
-                <div className="grid grid-cols-4 gap-1">
-                  {rates.map((rate, i) => (
+                <div className="grid grid-cols-5 gap-1">
+                  {referralRates.map((rate, i) => (
                     <div key={i} className="flex items-center gap-0.5">
                       <span className="text-[9px] text-muted-foreground w-5">L{i + 1}</span>
                       <Input type="number" value={rate} onChange={e => {
-                        const newRates = [...rates];
+                        const newRates = [...referralRates];
                         newRates[i] = Number(e.target.value);
-                        setRates(newRates);
+                        setReferralRates(newRates);
                       }} className="h-6 text-xs w-14" step="0.1" />
                       <span className="text-[9px] text-muted-foreground">%</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-1 mt-1">
-                  <Button size="sm" onClick={handleSaveRates} disabled={savingRates} className="h-6 text-[10px] px-2">
+                  <Button size="sm" onClick={handleSaveReferralRates} disabled={savingRates} className="h-6 text-[10px] px-2">
                     <Save className="w-3 h-3 mr-1" /> Save
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditingRates(false)} className="h-6 text-[10px] px-2">
+                  <Button size="sm" variant="ghost" onClick={() => setEditingReferralRates(false)} className="h-6 text-[10px] px-2">
                     <X className="w-3 h-3" />
                   </Button>
                 </div>
@@ -133,15 +149,54 @@ const AdminReferral = () => {
             ) : (
               <div className="flex items-center gap-1 mt-1 flex-wrap">
                 <p className="text-[10px] font-medium text-foreground">
-                  L1: {rates[0]}% · L2-10: {rates[1]}% · L11-20: {rates[10] || 1}%
+                  {referralRates.map((r, i) => `L${i + 1}: ${r}%`).join(" · ")}
                 </p>
-                <button onClick={() => setEditingRates(true)} className="p-1 hover:bg-muted/50 rounded">
+                <button onClick={() => setEditingReferralRates(true)} className="p-1 hover:bg-muted/50 rounded">
                   <Edit2 className="w-3 h-3 text-primary" />
                 </button>
               </div>
             )}
           </div>
         </div>
+
+        <div className="glass-strong rounded-xl p-4">
+          <GitBranch className="w-5 h-5 text-accent mb-2" />
+          <p className="text-xs text-muted-foreground">Rebate Rates (20 Levels - Daily Profit)</p>
+          {editingRebateRates ? (
+              <div className="space-y-1 mt-1">
+                <div className="grid grid-cols-4 gap-1">
+                  {rebateRates.map((rate, i) => (
+                    <div key={i} className="flex items-center gap-0.5">
+                      <span className="text-[9px] text-muted-foreground w-5">L{i + 1}</span>
+                      <Input type="number" value={rate} onChange={e => {
+                        const newRates = [...rebateRates];
+                        newRates[i] = Number(e.target.value);
+                        setRebateRates(newRates);
+                      }} className="h-6 text-xs w-14" step="0.1" />
+                      <span className="text-[9px] text-muted-foreground">%</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-1 mt-1">
+                  <Button size="sm" onClick={handleSaveRebateRates} disabled={savingRates} className="h-6 text-[10px] px-2">
+                    <Save className="w-3 h-3 mr-1" /> Save
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingRebateRates(false)} className="h-6 text-[10px] px-2">
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                <p className="text-[10px] font-medium text-foreground">
+                  L1: {rebateRates[0]}% · L2-10: {rebateRates[1]}% · L11-20: {rebateRates[10] || 1}%
+                </p>
+                <button onClick={() => setEditingRebateRates(true)} className="p-1 hover:bg-muted/50 rounded">
+                  <Edit2 className="w-3 h-3 text-primary" />
+                </button>
+              </div>
+            )}
+          </div>
 
         <div className="glass-strong rounded-2xl p-5">
           <h3 className="font-display font-semibold text-foreground mb-4">Referral Tree</h3>

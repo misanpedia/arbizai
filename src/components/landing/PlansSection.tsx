@@ -53,7 +53,7 @@ export function PlansSection() {
             AI Bot <span className="gradient-text">Plans</span>
           </h2>
           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto text-pretty">
-            Choose a plan that fits your trading goals. No lock period, withdraw anytime.
+            Choose a plan that fits your trading goals. 300% max ROI contract — your capital works until it triples.
           </p>
         </motion.div>
 
