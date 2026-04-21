@@ -51,8 +51,8 @@ const Deposit = () => {
       .select("*")
       .eq("user_id", user.id)
       .eq("type", "deposit")
-      .in("status", ["pending"])
       .order("created_at", { ascending: false })
+      .limit(20)
       .then(({ data }) => { if (data) setPendingDeposits(data); });
   }, [user]);
 
@@ -192,21 +192,35 @@ const Deposit = () => {
           )}
         </motion.div>
 
-        {/* Pending deposits */}
+        {/* Deposit history with commission status */}
         {pendingDeposits.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-strong rounded-2xl p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-warning" />
-              <span className="text-sm font-medium text-foreground">Pending Deposits ({pendingDeposits.length})</span>
+              <Clock className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">Deposit History</span>
             </div>
             <div className="space-y-2">
               {pendingDeposits.map(d => (
                 <div key={d.id} className="bg-muted/50 rounded-xl p-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-foreground">${Number(d.amount).toFixed(2)} USDT</p>
-                    <p className="text-[10px] text-muted-foreground">{d.network} · {new Date(d.created_at).toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">{d.network || "BEP20"} · {new Date(d.created_at).toLocaleString()}</p>
                   </div>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-warning/15 text-warning">Pending</span>
+                  <div className="text-right space-y-0.5">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      d.status === "approved" ? "bg-success/15 text-success" :
+                      d.status === "rejected" ? "bg-destructive/15 text-destructive" :
+                      "bg-warning/15 text-warning"
+                    }`}>
+                      {d.status === "approved" ? "Approved" : d.status === "rejected" ? "Rejected" : "Pending"}
+                    </span>
+                    {d.status === "approved" && (
+                      <p className="text-[9px] text-success">✓ Commissions distributed</p>
+                    )}
+                    {d.status === "pending" && (
+                      <p className="text-[9px] text-muted-foreground">Awaiting approval</p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
