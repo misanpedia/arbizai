@@ -9,12 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowUpCircle, AlertTriangle, Clock, Info, Ban } from "lucide-react";
 import { motion } from "framer-motion";
 
-const NETWORKS = ["BEP20", "TRC20", "ERC20"];
+const NETWORK = "BEP20";
 
 const Withdraw = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [network, setNetwork] = useState("BEP20");
   const [amount, setAmount] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [balance, setBalance] = useState(0);
@@ -112,7 +111,7 @@ const Withdraw = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("withdraw-request", {
-        body: { amount: amt, currency: "USDT", wallet_address: walletAddress, withdraw_type: "profit", network },
+        body: { amount: amt, currency: "USDT", wallet_address: walletAddress, withdraw_type: "profit", network: NETWORK },
       });
       if (error || !data?.success) {
         toast({ title: "Error", description: data?.error || "Failed to submit withdrawal", variant: "destructive" });
@@ -154,15 +153,6 @@ const Withdraw = () => {
   return (
     <DashboardLayout title="Withdraw">
       <div className="max-w-lg mx-auto space-y-6">
-        {/* Network Selector */}
-        <div className="flex gap-2">
-          {NETWORKS.map((n) => (
-            <button key={n} onClick={() => setNetwork(n)} className={`flex-1 py-2.5 rounded-xl text-xs font-medium transition ${network === n ? "gradient-primary text-primary-foreground" : "glass text-muted-foreground hover:text-foreground"}`}>
-              USDT ({n})
-            </button>
-          ))}
-        </div>
-
         {/* Balance Card */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-strong rounded-2xl p-5 text-center">
           <p className="text-sm text-muted-foreground">Available USDT Balance</p>
@@ -189,7 +179,7 @@ const Withdraw = () => {
         <div className="glass rounded-xl p-3 flex items-start gap-2">
           <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <div className="text-xs text-muted-foreground space-y-1">
-            <p>Withdrawal fee: {(feeRate * 100).toFixed(0)}%. No principal withdrawal — your investment runs until 300% ROI is reached.</p>
+            <p>Withdrawal fee: {(feeRate * 100).toFixed(0)}%.</p>
             <p>Withdrawable balance includes profits and commissions only.</p>
           </div>
         </div>
@@ -198,15 +188,15 @@ const Withdraw = () => {
         <div className="glass-strong rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <ArrowUpCircle className="w-5 h-5 text-warning" />
-            <span className="text-sm font-medium text-foreground">Withdrawal Details ({network})</span>
+            <span className="text-sm font-medium text-foreground">Withdrawal Details ({NETWORK})</span>
           </div>
           <div className="space-y-2">
             <Label>Amount (USDT)</Label>
             <Input type="number" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="glass" min={minAmount} max={maxAmount} />
           </div>
           <div className="space-y-2">
-            <Label>USDT Wallet Address ({network})</Label>
-            <Input placeholder={`Enter ${network} wallet address`} value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} className="glass" />
+            <Label>USDT Wallet Address ({NETWORK})</Label>
+            <Input placeholder={`Enter ${NETWORK} wallet address`} value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} className="glass" />
           </div>
 
           {amt > 0 && (
@@ -219,7 +209,7 @@ const Withdraw = () => {
 
           <div className="flex items-start gap-2 text-xs text-warning">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            <span>Withdrawals are processed within 1-24 hours. Bonus balance cannot be withdrawn. Make sure your {network} wallet address is correct.</span>
+            <span>Withdrawals are processed within 1-24 hours. Bonus balance cannot be withdrawn. Make sure your {NETWORK} wallet address is correct.</span>
           </div>
 
           <Button onClick={handleSubmit} disabled={loading || !amount || !walletAddress || isCooldownActive || amt < minAmount || amt > maxAmount || amt > balance} className="w-full gradient-primary text-primary-foreground">

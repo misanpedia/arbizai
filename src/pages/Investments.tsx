@@ -14,7 +14,7 @@ const Investments = () => {
 
   const fetchInvestments = () => {
     if (!user) return;
-    supabase.from("investments").select("*, investment_plans(display_name, daily_profit_min, daily_profit_max)").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => {
+    supabase.from("investments").select("*, investment_plans(display_name, daily_profit_min, daily_profit_max, roi_cap_multiplier)").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => {
       if (data) setInvestments(data as any[]);
     });
   };
@@ -60,7 +60,9 @@ const Investments = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {investments.map((inv, i) => (
+            {investments.map((inv, i) => {
+              const roiCapPercent = Number(inv.investment_plans?.roi_cap_multiplier || 3) * 100;
+              return (
               <motion.div key={inv.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-strong rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-display font-semibold text-foreground">{inv.investment_plans?.display_name || "Plan"}</h3>
@@ -86,13 +88,13 @@ const Investments = () => {
                   <div className="mt-2">
                     <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
                       <span>ROI Progress</span>
-                      <span>{((Number(inv.total_profit || 0) / Number(inv.max_roi)) * 100).toFixed(1)}% of 300%</span>
+                      <span>{((Number(inv.total_profit || 0) / Number(inv.max_roi)) * 100).toFixed(1)}% of {roiCapPercent}%</span>
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-primary to-success rounded-full transition-all" style={{ width: `${Math.min(100, (Number(inv.total_profit || 0) / Number(inv.max_roi)) * 100)}%` }} />
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1">
-                      ${Number(inv.total_profit || 0).toFixed(2)} / ${Number(inv.max_roi).toFixed(2)} (Max 300%)
+                      ${Number(inv.total_profit || 0).toFixed(2)} / ${Number(inv.max_roi).toFixed(2)} (Max {roiCapPercent}%)
                     </p>
                 </div>
                 )}
@@ -116,7 +118,7 @@ const Investments = () => {
                   {new Date(inv.created_at).toLocaleDateString()}
                 </div>
               </motion.div>
-            ))}
+            )})}
           </div>
         )}
       </div>

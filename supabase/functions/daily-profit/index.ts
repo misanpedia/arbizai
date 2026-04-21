@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
     const { data: investments, error: invError } = await supabase
       .from("investments")
-      .select("id, user_id, amount, plan_id, auto_compound, total_profit, max_roi, investment_plans(daily_profit_min, daily_profit_max)")
+      .select("id, user_id, amount, plan_id, auto_compound, total_profit, max_roi, investment_plans(daily_profit_min, daily_profit_max, roi_cap_multiplier)")
       .eq("status", "active");
 
     if (invError) throw invError;
@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
       if (!plan) continue;
 
       const currentTotalProfit = Number(inv.total_profit || 0);
-      const maxRoi = Number(inv.max_roi || inv.amount * 3);
+      const roiMultiplier = Number(plan.roi_cap_multiplier || 3);
+      const maxRoi = Number(inv.max_roi || inv.amount * roiMultiplier);
 
       // Check if 300% ROI already reached
       if (currentTotalProfit >= maxRoi) {
@@ -106,7 +107,7 @@ Deno.serve(async (req) => {
         // Auto-compound adds to investment amount (increases daily profit base)
         await supabase
           .from("investments")
-          .update({ amount: Number(inv.amount) + profitAmount, max_roi: (Number(inv.amount) + profitAmount) * 3 })
+          .update({ amount: Number(inv.amount) + profitAmount, max_roi: (Number(inv.amount) + profitAmount) * roiMultiplier })
           .eq("id", inv.id);
       } else {
         const { data: wallet } = await supabase

@@ -139,6 +139,7 @@ export type Database = {
           max_amount: number
           min_amount: number
           name: string
+          roi_cap_multiplier: number
         }
         Insert: {
           created_at?: string | null
@@ -150,6 +151,7 @@ export type Database = {
           max_amount: number
           min_amount: number
           name: string
+          roi_cap_multiplier?: number
         }
         Update: {
           created_at?: string | null
@@ -161,6 +163,7 @@ export type Database = {
           max_amount?: number
           min_amount?: number
           name?: string
+          roi_cap_multiplier?: number
         }
         Relationships: []
       }

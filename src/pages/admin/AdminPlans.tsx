@@ -30,6 +30,7 @@ const AdminPlans = () => {
       max_amount: Number(editData.max_amount),
       daily_profit_min: Number(editData.daily_profit_min),
       daily_profit_max: Number(editData.daily_profit_max),
+      roi_cap_multiplier: Number(editData.roi_cap_multiplier || 3),
       is_active: editData.is_active,
     }).eq("id", editing!);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -51,6 +52,11 @@ const AdminPlans = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1"><Label>Daily Min %</Label><Input type="number" step="0.01" value={editData.daily_profit_min} onChange={e => setEditData({ ...editData, daily_profit_min: e.target.value })} /></div>
                   <div className="space-y-1"><Label>Daily Max %</Label><Input type="number" step="0.01" value={editData.daily_profit_max} onChange={e => setEditData({ ...editData, daily_profit_max: e.target.value })} /></div>
+                </div>
+                <div className="space-y-1">
+                  <Label>ROI Cap Multiplier</Label>
+                  <Input type="number" step="0.1" min="1" value={editData.roi_cap_multiplier ?? 3} onChange={e => setEditData({ ...editData, roi_cap_multiplier: e.target.value })} />
+                  <p className="text-[10px] text-muted-foreground">3 = maximum ROI 300% including capital.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" checked={editData.is_active} onChange={e => setEditData({ ...editData, is_active: e.target.checked })} />
@@ -76,6 +82,7 @@ const AdminPlans = () => {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div><span className="text-muted-foreground">Range:</span> <span className="font-medium text-foreground">${Number(plan.min_amount)} – ${Number(plan.max_amount)}</span></div>
                   <div><span className="text-muted-foreground">Daily:</span> <span className="font-medium text-success">{Number(plan.daily_profit_min)}% – {Number(plan.daily_profit_max)}%</span></div>
+                  <div><span className="text-muted-foreground">ROI Cap:</span> <span className="font-medium text-primary">{Number(plan.roi_cap_multiplier || 3) * 100}%</span></div>
                 </div>
               </>
             )}

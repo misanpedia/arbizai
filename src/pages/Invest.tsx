@@ -67,8 +67,8 @@ const Invest = () => {
       plan_id: selectedPlan.id,
       amount: amt,
       bonus_used: bonusUsed,
+      max_roi: amt * Number(selectedPlan.roi_cap_multiplier || 3),
     } as any);
-    // Note: max_roi defaults to 0 in DB, daily-profit function will use amount*3 if max_roi=0
     setLoading(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

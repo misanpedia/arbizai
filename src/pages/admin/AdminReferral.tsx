@@ -84,12 +84,18 @@ const AdminReferral = () => {
 
   const handleSaveReferralRates = async () => {
     setSavingRates(true);
-    await supabase.from("system_settings").upsert(
-      { key: "referral_commission_rates", value: referralRates as any, updated_at: new Date().toISOString() },
+    const normalizedRates = referralRates.slice(0, 5).map(rate => Number(rate) || 0);
+    const { error } = await supabase.from("system_settings").upsert(
+      { key: "referral_commission_rates", value: normalizedRates as any, updated_at: new Date().toISOString() },
       { onConflict: "key" }
     );
-    toast({ title: "Referral commission rates saved!" });
-    setEditingReferralRates(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setReferralRates(normalizedRates);
+      toast({ title: "Referral commission rates saved!" });
+      setEditingReferralRates(false);
+    }
     setSavingRates(false);
   };
 
