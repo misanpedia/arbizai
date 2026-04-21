@@ -197,7 +197,6 @@ const AdminReferral = () => {
               </div>
             )}
           </div>
-        </div>
 
         <div className="glass-strong rounded-2xl p-5">
           <h3 className="font-display font-semibold text-foreground mb-4">Referral Tree</h3>
