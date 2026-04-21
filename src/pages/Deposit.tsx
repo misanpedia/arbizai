@@ -51,8 +51,8 @@ const Deposit = () => {
       .select("*")
       .eq("user_id", user.id)
       .eq("type", "deposit")
-      .in("status", ["pending"])
       .order("created_at", { ascending: false })
+      .limit(20)
       .then(({ data }) => { if (data) setPendingDeposits(data); });
   }, [user]);
 
