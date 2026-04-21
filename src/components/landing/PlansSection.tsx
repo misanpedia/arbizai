@@ -40,6 +40,8 @@ export function PlansSection() {
       });
   }, []);
 
+  const maxRoiPercent = plans.length > 0 ? Number(plans[0].roi_cap_multiplier || 3) * 100 : 300;
+
   return (
     <section className="py-20 md:py-24" id="plans">
       <div className="container px-4">
@@ -53,7 +55,7 @@ export function PlansSection() {
             AI Bot <span className="gradient-text">Plans</span>
           </h2>
           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto text-pretty">
-            Choose a plan that fits your trading goals. 300% max ROI contract — your capital works until it triples.
+            Choose a plan that fits your trading goals. Max ROI contract up to {maxRoiPercent}% — including capital.
           </p>
         </motion.div>
 
