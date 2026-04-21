@@ -78,17 +78,20 @@ const AdminDeposits = () => {
   const handleAction = async (id: string, action: "approved" | "rejected") => {
     const tx = deposits.find(d => d.id === id);
     if (action === "approved" && tx) {
-      const { error: rpcError } = await supabase.functions.invoke("admin-wallet-op", {
-        body: { op: "credit", user_id: tx.user_id, currency: tx.currency, amount: Number(tx.amount) },
+      const { data: result, error: rpcError } = await supabase.functions.invoke("approve-deposit", {
+        body: { transaction_id: tx.id },
       });
-      if (rpcError) {
-        toast({ title: "Error crediting wallet", description: rpcError.message, variant: "destructive" });
+      if (rpcError || result?.error) {
+        toast({ title: "Error", description: result?.error || rpcError?.message || "Failed to approve", variant: "destructive" });
         return;
       }
     }
-    const { error } = await supabase.from("transactions").update({ status: action }).eq("id", id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: `Deposit ${action}` }); fetchDeposits(); }
+    if (action === "rejected") {
+      const { error } = await supabase.from("transactions").update({ status: action }).eq("id", id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    }
+    toast({ title: `Deposit ${action}` });
+    fetchDeposits();
   };
 
   const getMetadata = (d: any) => {
