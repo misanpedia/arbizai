@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     );
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { amount, currency = "USDT", wallet_address, withdraw_type = "profit", network = "BEP20" } = await req.json();
+    const { amount, currency = "USDT", wallet_address, network = "BEP20" } = await req.json();
 
     if (!amount || amount <= 0) throw new Error("Invalid amount");
     if (!wallet_address) throw new Error("Wallet address required");
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     const { data: settingsData } = await supabase
       .from("system_settings")
       .select("key, value")
-      .in("key", ["withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount", "withdrawal_enabled", "withdrawal_cooldown_hours", "withdrawal_principal_penalty_rate"]);
+      .in("key", ["withdrawal_fee_rate", "withdrawal_min_amount", "withdrawal_max_amount", "withdrawal_enabled", "withdrawal_cooldown_hours"]);
 
     const settings: Record<string, any> = {};
     settingsData?.forEach((s: any) => { settings[s.key] = s.value; });
@@ -62,15 +62,7 @@ Deno.serve(async (req) => {
 
     // Calculate fees
     const fee = amount * feeRate;
-    let penalty = 0;
-
-    if (withdraw_type === "principal") {
-      const penaltyRate = Number(settings.withdrawal_principal_penalty_rate || 0.10);
-      penalty = amount * penaltyRate;
-    }
-
-    const totalDeduction = fee + penalty;
-    const netAmount = amount - totalDeduction;
+    const netAmount = amount - fee;
 
     // Debit wallet
     await supabase
@@ -89,7 +81,7 @@ Deno.serve(async (req) => {
       wallet_address,
       network,
       status: "pending",
-      description: `Withdraw ${withdraw_type} $${amount} (fee: $${fee.toFixed(2)}, penalty: $${penalty.toFixed(2)})`,
+      description: `Withdraw profit $${amount} (fee: $${fee.toFixed(2)})`,
     });
 
     // Send notification
@@ -101,7 +93,7 @@ Deno.serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ success: true, netAmount, fee, penalty }),
+      JSON.stringify({ success: true, netAmount, fee }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {

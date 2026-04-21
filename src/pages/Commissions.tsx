@@ -17,6 +17,7 @@ const Commissions = () => {
   }, [user]);
 
   const total = commissions.reduce((s, c) => s + Number(c.amount), 0);
+  const referralTotal = commissions.filter(c => c.type === "referral").reduce((s, c) => s + Number(c.amount), 0);
   const rebateTotal = commissions.filter(c => c.type === "rebate").reduce((s, c) => s + Number(c.amount), 0);
   const rankTotal = commissions.filter(c => c.type === "rank_weekly").reduce((s, c) => s + Number(c.amount), 0);
 
@@ -27,9 +28,13 @@ const Commissions = () => {
           <Wallet className="w-8 h-8 text-success mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">Total Commission Earned</p>
           <p className="text-3xl font-display font-bold text-success">${total.toFixed(2)}</p>
-          <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="grid grid-cols-3 gap-3 mt-3">
             <div className="bg-muted/50 rounded-xl p-2">
-              <p className="text-[10px] text-muted-foreground">Rebate (20 Level)</p>
+              <p className="text-[10px] text-muted-foreground">Referral (Deposit)</p>
+              <p className="text-sm font-bold text-foreground">${referralTotal.toFixed(2)}</p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-2">
+              <p className="text-[10px] text-muted-foreground">Rebate (Profit)</p>
               <p className="text-sm font-bold text-foreground">${rebateTotal.toFixed(2)}</p>
             </div>
             <div className="bg-muted/50 rounded-xl p-2">
