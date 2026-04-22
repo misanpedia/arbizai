@@ -89,6 +89,22 @@ const Deposit = () => {
       toast({ title: "Deposit Submitted!", description: "Your deposit is pending admin approval." });
       setAmount("");
       setTxHash("");
+      // Send Telegram notification for new deposit
+      try {
+        const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+        await supabase.functions.invoke("telegram-notify", {
+          body: {
+            event: "new_deposit",
+            data: {
+              user_name: profile?.full_name || user.email || "Unknown",
+              amount: amt,
+              currency: "USDT",
+              network: selectedNetwork,
+              tx_hash: txHash || null,
+            },
+          },
+        });
+      } catch (_) { /* non-critical */ }
       // Refresh pending
       const { data } = await supabase.from("transactions").select("*").eq("user_id", user.id).eq("type", "deposit").eq("status", "pending").order("created_at", { ascending: false });
       if (data) setPendingDeposits(data);

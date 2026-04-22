@@ -114,6 +114,25 @@ Deno.serve(async (req) => {
 
     console.log("Referral audit for deposit", tx.id, JSON.stringify(auditLog));
 
+    // Send Telegram notification for approved deposit
+    try {
+      const { data: depositorProfile } = await supabase.from("profiles").select("full_name").eq("user_id", tx.user_id).maybeSingle();
+      await supabase.functions.invoke("telegram-notify", {
+        body: {
+          event: "deposit_approved",
+          data: {
+            user_name: depositorProfile?.full_name || "Unknown",
+            amount: depositAmount,
+            currency: tx.currency || "USDT",
+            tx_id: tx.id,
+            audit_log: auditLog,
+          },
+        },
+      });
+    } catch (tgErr) {
+      console.error("Telegram notify error (non-fatal):", tgErr);
+    }
+
     return new Response(JSON.stringify({ success: true, audit_log: auditLog }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error: any) {
     console.error("Approve deposit error:", error);
