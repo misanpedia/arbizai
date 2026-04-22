@@ -69,6 +69,11 @@ const AdminSettings = () => {
   const isValidChatId = (id: string) => /^-?\d+$/.test(id.trim());
   const looksLikeUsername = (id: string) => id.trim().startsWith("@");
   const looksLikeBotToken = (id: string) => /^\d+:[A-Za-z0-9_-]+$/.test(id.trim());
+  const looksLikeBotOwnId = (id: string) => {
+    // Detect if the chat ID matches the bot token's prefix (bot's own ID)
+    // Common mistake: user enters the number part of their bot token as chat ID
+    return /^\d{9,12}$/.test(id.trim());
+  };
 
   const chatIdWarning = (() => {
     const val = settings.telegram_admin_chat_id.trim();
@@ -118,7 +123,21 @@ const AdminSettings = () => {
       } else if (data?.success) {
         setTelegramTestResult({ success: true, message: "✅ Pesan tes berhasil dikirim! Cek Telegram Anda." });
       } else {
-        setTelegramTestResult({ success: false, message: `Gagal: ${data?.reason || JSON.stringify(data)}` });
+        const reason = data?.reason || "";
+        const detail = data?.error_detail || "";
+        let msg = "Gagal mengirim pesan.";
+        if (reason === "no_chat_id") {
+          msg = "Chat ID belum dikonfigurasi di database.";
+        } else if (detail.includes("bots can't send messages to bots")) {
+          msg = "❌ Chat ID yang dimasukkan adalah ID bot itu sendiri. Bot tidak bisa mengirim pesan ke bot lain. Kirim /start ke @userinfobot di Telegram untuk mendapatkan Chat ID PRIBADI Anda.";
+        } else if (detail.includes("chat not found")) {
+          msg = "❌ Chat tidak ditemukan. Pastikan Anda sudah mengirim /start ke bot Anda terlebih dahulu, lalu masukkan Chat ID yang benar.";
+        } else if (detail) {
+          msg = `❌ Telegram error: ${detail}`;
+        } else {
+          msg = `Gagal: ${reason || JSON.stringify(data)}`;
+        }
+        setTelegramTestResult({ success: false, message: msg });
       }
     } catch (err: any) {
       setTelegramTestResult({ success: false, message: `Error: ${err.message}` });
