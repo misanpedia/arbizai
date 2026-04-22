@@ -34,12 +34,12 @@ async function sendTelegram(chatId: string, text: string) {
     const data = await response.json();
     if (!response.ok) {
       console.error("Telegram API error:", JSON.stringify(data));
-      return false;
+      return data?.description || "Unknown Telegram error";
     }
     return true;
   } catch (err) {
     console.error("Telegram send error:", err);
-    return false;
+    return `Network error: ${err}`;
   }
 }
 
@@ -102,7 +102,9 @@ Deno.serve(async (req) => {
 
     const sent = await sendTelegram(chatId, message);
 
-    return new Response(JSON.stringify({ success: sent }), {
+    const isSuccess = sent === true;
+    const errorDetail = typeof sent === "string" ? sent : undefined;
+    return new Response(JSON.stringify({ success: isSuccess, ...(errorDetail ? { error_detail: errorDetail } : {}) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
