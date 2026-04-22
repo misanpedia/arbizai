@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Save, Key, Percent, Award, Coins, Phone, HelpCircle } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 const defaultSettings = {
   withdrawal_fee: "5",
@@ -53,6 +54,7 @@ const defaultSettings = {
   company_address: "Singapore",
   working_hours: "24/7 Support",
   help_center_url: "",
+  telegram_admin_chat_id: "",
 };
 
 const AdminSettings = () => {
@@ -175,6 +177,16 @@ const AdminSettings = () => {
             <div className="space-y-1"><Label>Company Address</Label><Input value={settings.company_address} onChange={e => updateField("company_address", e.target.value)} /></div>
             <div className="space-y-1"><Label>Working Hours</Label><Input value={settings.working_hours} onChange={e => updateField("working_hours", e.target.value)} /></div>
             <div className="space-y-1"><Label>Help Center URL</Label><Input value={settings.help_center_url} onChange={e => updateField("help_center_url", e.target.value)} placeholder="Optional" /></div>
+          </div>
+        </div>
+
+        {/* Telegram Notification */}
+        <div className="glass-strong rounded-2xl p-5 space-y-4">
+          <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><MessageSquare className="w-4 h-4 text-primary" />Telegram Notifications</h3>
+          <p className="text-xs text-muted-foreground">Masukkan Chat ID Telegram admin untuk menerima notifikasi deposit baru dan approval. Gunakan @userinfobot di Telegram untuk mendapatkan Chat ID.</p>
+          <div className="space-y-1">
+            <Label>Admin Telegram Chat ID</Label>
+            <Input value={settings.telegram_admin_chat_id} onChange={e => updateField("telegram_admin_chat_id", e.target.value)} placeholder="e.g. 123456789" />
           </div>
         </div>
 
