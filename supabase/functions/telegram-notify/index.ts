@@ -71,17 +71,19 @@ Deno.serve(async (req) => {
     let message = "";
 
     if (event === "new_deposit") {
-      const { user_name, amount, currency, network, tx_hash, tx_id } = data;
+      const { user_name, user_email, amount, currency, network, tx_hash, tx_id, deposit_date } = data;
       message =
         `🆕 <b>New Deposit Request</b>\n\n` +
         `👤 User: <b>${user_name || "Unknown"}</b>\n` +
+        `📧 Email: ${user_email || "-"}\n` +
         `💰 Amount: <b>$${Number(amount).toFixed(2)} ${currency || "USDT"}</b>\n` +
         `🌐 Network: ${network || "BEP20"}\n` +
+        `📅 Date: ${deposit_date || new Date().toISOString().slice(0, 19).replace("T", " ")}\n` +
         `${tx_hash ? `🔗 TxHash: <code>${tx_hash}</code>\n` : ""}` +
         `📝 ID: <code>${tx_id?.slice(0, 8) || "-"}</code>\n\n` +
         `⏳ <i>Waiting for admin approval</i>`;
     } else if (event === "deposit_approved") {
-      const { user_name, amount, currency, tx_id, audit_log } = data;
+      const { user_name, user_email, amount, currency, tx_id, audit_log, deposit_date } = data;
       let commSummary = "";
       if (audit_log && Array.isArray(audit_log)) {
         const distributed = audit_log.filter((a: any) => a.status === "distributed");
@@ -93,7 +95,9 @@ Deno.serve(async (req) => {
       message =
         `✅ <b>Deposit Approved</b>\n\n` +
         `👤 User: <b>${user_name || "Unknown"}</b>\n` +
+        `📧 Email: ${user_email || "-"}\n` +
         `💰 Amount: <b>$${Number(amount).toFixed(2)} ${currency || "USDT"}</b>\n` +
+        `📅 Date: ${deposit_date || new Date().toISOString().slice(0, 19).replace("T", " ")}\n` +
         `📝 ID: <code>${tx_id?.slice(0, 8) || "-"}</code>` +
         commSummary;
     } else {
