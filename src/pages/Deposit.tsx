@@ -91,16 +91,18 @@ const Deposit = () => {
       setTxHash("");
       // Send Telegram notification for new deposit
       try {
-        const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+        const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("user_id", user.id).maybeSingle();
         await supabase.functions.invoke("telegram-notify", {
           body: {
             event: "new_deposit",
             data: {
               user_name: profile?.full_name || user.email || "Unknown",
+              user_email: profile?.email || user.email || "-",
               amount: amt,
               currency: "USDT",
               network: selectedNetwork,
               tx_hash: txHash || null,
+              deposit_date: new Date().toISOString().slice(0, 19).replace("T", " "),
             },
           },
         });

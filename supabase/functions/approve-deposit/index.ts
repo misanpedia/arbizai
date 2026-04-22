@@ -116,16 +116,18 @@ Deno.serve(async (req) => {
 
     // Send Telegram notification for approved deposit
     try {
-      const { data: depositorProfile } = await supabase.from("profiles").select("full_name").eq("user_id", tx.user_id).maybeSingle();
+      const { data: depositorProfile } = await supabase.from("profiles").select("full_name, email").eq("user_id", tx.user_id).maybeSingle();
       await supabase.functions.invoke("telegram-notify", {
         body: {
           event: "deposit_approved",
           data: {
             user_name: depositorProfile?.full_name || "Unknown",
+            user_email: depositorProfile?.email || "-",
             amount: depositAmount,
             currency: tx.currency || "USDT",
             tx_id: tx.id,
             audit_log: auditLog,
+            deposit_date: tx.created_at || new Date().toISOString(),
           },
         },
       });
