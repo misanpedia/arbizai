@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Save, Key, Percent, Award, Coins, Phone, HelpCircle } from "lucide-react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Send, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 
 const defaultSettings = {
   withdrawal_fee: "5",
@@ -63,6 +63,69 @@ const AdminSettings = () => {
   const [settings, setSettings] = useState(defaultSettings);
   const [saving, setSaving] = useState(false);
   const [_showApiKey, _setShowApiKey] = useState(false); // unused, kept to avoid breaking
+  const [testingTelegram, setTestingTelegram] = useState(false);
+  const [telegramTestResult, setTelegramTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const isValidChatId = (id: string) => /^-?\d+$/.test(id.trim());
+  const looksLikeUsername = (id: string) => id.trim().startsWith("@");
+  const looksLikeBotToken = (id: string) => /^\d+:[A-Za-z0-9_-]+$/.test(id.trim());
+
+  const chatIdWarning = (() => {
+    const val = settings.telegram_admin_chat_id.trim();
+    if (!val) return null;
+    if (looksLikeBotToken(val)) return "⚠️ Ini adalah Bot Token, bukan Chat ID. Chat ID berupa angka saja (misal: 123456789). Kirim /start ke @userinfobot untuk mendapatkan Chat ID Anda.";
+    if (looksLikeUsername(val)) return "⚠️ Ini adalah username, bukan Chat ID. Chat ID berupa angka (misal: 123456789). Kirim /start ke @userinfobot untuk mendapatkan Chat ID Anda.";
+    if (!isValidChatId(val)) return "⚠️ Chat ID harus berupa angka. Kirim /start ke @userinfobot di Telegram untuk mendapatkan Chat ID.";
+    return null;
+  })();
+
+  const sendTestTelegram = async () => {
+    const chatId = settings.telegram_admin_chat_id.trim();
+    if (!chatId) {
+      setTelegramTestResult({ success: false, message: "Chat ID belum diisi." });
+      return;
+    }
+    if (!isValidChatId(chatId)) {
+      setTelegramTestResult({ success: false, message: "Chat ID tidak valid. Harus berupa angka." });
+      return;
+    }
+
+    setTestingTelegram(true);
+    setTelegramTestResult(null);
+    try {
+      // Save chat ID first
+      await supabase.from("system_settings").upsert(
+        { key: "telegram_admin_chat_id", value: JSON.parse(JSON.stringify(chatId)), updated_by: user?.id },
+        { onConflict: "key" }
+      );
+
+      const { data, error } = await supabase.functions.invoke("telegram-notify", {
+        body: {
+          event: "new_deposit",
+          data: {
+            user_name: "Test User",
+            amount: 100,
+            currency: "USDT",
+            network: "BEP20",
+            tx_hash: "0xTEST123456789",
+            tx_id: "test0000-0000",
+          },
+        },
+      });
+
+      if (error) {
+        setTelegramTestResult({ success: false, message: `Edge function error: ${error.message}` });
+      } else if (data?.success) {
+        setTelegramTestResult({ success: true, message: "✅ Pesan tes berhasil dikirim! Cek Telegram Anda." });
+      } else {
+        setTelegramTestResult({ success: false, message: `Gagal: ${data?.reason || JSON.stringify(data)}` });
+      }
+    } catch (err: any) {
+      setTelegramTestResult({ success: false, message: `Error: ${err.message}` });
+    } finally {
+      setTestingTelegram(false);
+    }
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -186,8 +249,37 @@ const AdminSettings = () => {
           <p className="text-xs text-muted-foreground">Masukkan Chat ID Telegram admin untuk menerima notifikasi deposit baru dan approval. Gunakan @userinfobot di Telegram untuk mendapatkan Chat ID.</p>
           <div className="space-y-1">
             <Label>Admin Telegram Chat ID</Label>
-            <Input value={settings.telegram_admin_chat_id} onChange={e => updateField("telegram_admin_chat_id", e.target.value)} placeholder="e.g. 123456789" />
+            <Input
+              value={settings.telegram_admin_chat_id}
+              onChange={e => { updateField("telegram_admin_chat_id", e.target.value); setTelegramTestResult(null); }}
+              placeholder="e.g. 123456789"
+              className={chatIdWarning ? "border-yellow-500" : ""}
+            />
+            {chatIdWarning && (
+              <div className="flex items-start gap-2 mt-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-yellow-400">{chatIdWarning}</p>
+              </div>
+            )}
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={sendTestTelegram}
+            disabled={testingTelegram || !settings.telegram_admin_chat_id.trim()}
+            className="w-full"
+          >
+            <Send className="w-3 h-3 mr-2" />
+            {testingTelegram ? "Mengirim..." : "Kirim Uji Telegram"}
+          </Button>
+
+          {telegramTestResult && (
+            <div className={`flex items-start gap-2 p-3 rounded-lg border ${telegramTestResult.success ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"}`}>
+              {telegramTestResult.success ? <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />}
+              <p className={`text-xs ${telegramTestResult.success ? "text-green-400" : "text-red-400"}`}>{telegramTestResult.message}</p>
+            </div>
+          )}
         </div>
 
         <Button onClick={saveSettings} disabled={saving} className="w-full gradient-primary text-primary-foreground">
