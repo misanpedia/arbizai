@@ -38,7 +38,7 @@ const ForgotPassword = () => {
         <div className="glass-strong rounded-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-2">
-              <img src={logo} alt="Arbiz AI" className="h-[120px]" />
+              <img src={logo} alt="Arbiz AI" className="h-12" />
             </div>
             <h1 className="text-2xl font-display font-bold text-foreground">Reset Password</h1>
             <p className="text-muted-foreground text-sm">Enter your email to receive a reset link</p>
