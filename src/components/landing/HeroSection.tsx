@@ -28,7 +28,7 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32">
       {/* Background effects */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-3xl animate-pulse-glow" />
@@ -37,7 +37,7 @@ export function HeroSection() {
       </div>
 
       {/* Floating ticker */}
-      <div className="absolute top-20 left-0 right-0 overflow-hidden border-b border-border/30 bg-card/30 backdrop-blur-sm">
+      <div className="absolute top-16 left-0 right-0 z-20 overflow-hidden border-b border-border/30 bg-card/60 backdrop-blur-sm">
         <div className="flex animate-ticker">
           {[...coins, ...coins].map((coin, i) => (
             <div key={i} className="flex items-center gap-2 px-6 py-2 whitespace-nowrap">
