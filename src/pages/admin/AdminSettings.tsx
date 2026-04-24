@@ -266,6 +266,64 @@ const AdminSettings = () => {
           <p className="text-xs text-muted-foreground">The NOWPayments API key is securely managed via backend secrets and cannot be viewed or edited here. Contact your system administrator to update it.</p>
         </div>
 
+        {/* Brand Logo */}
+        <div className="glass-strong rounded-2xl p-5 space-y-4">
+          <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-primary" />Brand Logo
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Upload logo baru untuk diterapkan di Landing Page, halaman Login/Register, dan Admin Panel. Format: PNG / JPG / SVG / WEBP, maks 2MB. Disarankan PNG transparan.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs">Logo Saat Ini</Label>
+              <div className="h-32 rounded-lg border border-border bg-background/40 flex items-center justify-center p-3">
+                <img src={currentLogo} alt="Logo saat ini" className="max-h-full max-w-full object-contain" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Pratinjau Logo Baru</Label>
+              <div className="h-32 rounded-lg border border-dashed border-border bg-background/40 flex items-center justify-center p-3">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Preview logo baru" className="max-h-full max-w-full object-contain" />
+                ) : (
+                  <span className="text-xs text-muted-foreground">Belum ada file</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <label className="flex-1">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                onChange={onLogoFileChange}
+                className="hidden"
+              />
+              <span className="cursor-pointer w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border text-sm hover:bg-accent transition">
+                <Upload className="w-4 h-4" /> Pilih File
+              </span>
+            </label>
+            <Button
+              onClick={applyLogo}
+              disabled={!logoFile || uploadingLogo}
+              className="gradient-primary text-primary-foreground"
+            >
+              <Save className="w-3 h-3 mr-1" />
+              {uploadingLogo ? "Menerapkan..." : "Terapkan Logo"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={resetLogo}
+              disabled={uploadingLogo}
+            >
+              <RotateCcw className="w-3 h-3 mr-1" /> Reset
+            </Button>
+          </div>
+        </div>
+
         {/* Referral Commission Rates */}
         <div className="glass-strong rounded-2xl p-5 space-y-4">
           <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><Percent className="w-4 h-4 text-primary" />Referral Commission Rates (% rebate dari profit harian)</h3>
