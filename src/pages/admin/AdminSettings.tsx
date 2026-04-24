@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Key, Percent, Award, Coins, Phone, HelpCircle } from "lucide-react";
+import { Settings, Save, Key, Percent, Award, Coins, Phone, HelpCircle, Image as ImageIcon, Upload, RotateCcw } from "lucide-react";
 import { MessageSquare, Send, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { broadcastLogo, useLogo } from "@/hooks/useLogo";
 
 const defaultSettings = {
   withdrawal_fee: "5",
@@ -65,6 +66,73 @@ const AdminSettings = () => {
   const [_showApiKey, _setShowApiKey] = useState(false); // unused, kept to avoid breaking
   const [testingTelegram, setTestingTelegram] = useState(false);
   const [telegramTestResult, setTelegramTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const currentLogo = useLogo();
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const onLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "File tidak valid", description: "Mohon pilih file gambar (PNG, JPG, SVG, WEBP).", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Ukuran terlalu besar", description: "Maks 2MB.", variant: "destructive" });
+      return;
+    }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const applyLogo = async () => {
+    if (!logoFile) return;
+    setUploadingLogo(true);
+    try {
+      const ext = logoFile.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `logo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("branding").upload(path, logoFile, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: logoFile.type,
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("branding").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const { error: setErr } = await supabase.from("system_settings").upsert(
+        { key: "logo_url", value: JSON.parse(JSON.stringify(url)), updated_by: user?.id },
+        { onConflict: "key" }
+      );
+      if (setErr) throw setErr;
+      broadcastLogo(url);
+      setLogoFile(null);
+      setLogoPreview(null);
+      toast({ title: "Logo berhasil diterapkan", description: "Logo baru kini tampil di seluruh platform." });
+    } catch (err: any) {
+      toast({ title: "Gagal upload logo", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const resetLogo = async () => {
+    setUploadingLogo(true);
+    try {
+      await supabase.from("system_settings").upsert(
+        { key: "logo_url", value: JSON.parse(JSON.stringify("")), updated_by: user?.id },
+        { onConflict: "key" }
+      );
+      broadcastLogo("");
+      setLogoFile(null);
+      setLogoPreview(null);
+      toast({ title: "Logo direset", description: "Kembali menggunakan logo bawaan." });
+    } catch (err: any) {
+      toast({ title: "Gagal reset", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const isValidChatId = (id: string) => /^-?\d+$/.test(id.trim());
   const looksLikeUsername = (id: string) => id.trim().startsWith("@");
@@ -196,6 +264,64 @@ const AdminSettings = () => {
         <div className="glass-strong rounded-2xl p-5 space-y-4">
           <h3 className="font-display font-semibold text-foreground flex items-center gap-2"><Key className="w-4 h-4 text-primary" />NOWPayments API Key</h3>
           <p className="text-xs text-muted-foreground">The NOWPayments API key is securely managed via backend secrets and cannot be viewed or edited here. Contact your system administrator to update it.</p>
+        </div>
+
+        {/* Brand Logo */}
+        <div className="glass-strong rounded-2xl p-5 space-y-4">
+          <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-primary" />Brand Logo
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Upload logo baru untuk diterapkan di Landing Page, halaman Login/Register, dan Admin Panel. Format: PNG / JPG / SVG / WEBP, maks 2MB. Disarankan PNG transparan.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs">Logo Saat Ini</Label>
+              <div className="h-32 rounded-lg border border-border bg-background/40 flex items-center justify-center p-3">
+                <img src={currentLogo} alt="Logo saat ini" className="max-h-full max-w-full object-contain" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Pratinjau Logo Baru</Label>
+              <div className="h-32 rounded-lg border border-dashed border-border bg-background/40 flex items-center justify-center p-3">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Preview logo baru" className="max-h-full max-w-full object-contain" />
+                ) : (
+                  <span className="text-xs text-muted-foreground">Belum ada file</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <label className="flex-1">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                onChange={onLogoFileChange}
+                className="hidden"
+              />
+              <span className="cursor-pointer w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border text-sm hover:bg-accent transition">
+                <Upload className="w-4 h-4" /> Pilih File
+              </span>
+            </label>
+            <Button
+              onClick={applyLogo}
+              disabled={!logoFile || uploadingLogo}
+              className="gradient-primary text-primary-foreground"
+            >
+              <Save className="w-3 h-3 mr-1" />
+              {uploadingLogo ? "Menerapkan..." : "Terapkan Logo"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={resetLogo}
+              disabled={uploadingLogo}
+            >
+              <RotateCcw className="w-3 h-3 mr-1" /> Reset
+            </Button>
+          </div>
         </div>
 
         {/* Referral Commission Rates */}

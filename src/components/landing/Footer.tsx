@@ -1,8 +1,9 @@
 import { AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import { useLogo } from "@/hooks/useLogo";
 
 export function Footer() {
+  const logo = useLogo();
   return (
     <footer className="border-t border-border/50 py-12">
       <div className="container px-4">
@@ -23,7 +24,7 @@ export function Footer() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
           <div>
-            <img src={logo} alt="Arbiz AI" className="h-8 mb-3" />
+            <img src={logo} alt="Arbiz AI" className="h-24 mb-3" />
             <p className="text-sm text-muted-foreground">AI-powered crypto arbitrage automation platform.</p>
           </div>
           <div>

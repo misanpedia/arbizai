@@ -3,12 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import logo from "@/assets/logo.png";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, ArrowLeft, Zap } from "lucide-react";
+import { useLogo } from "@/hooks/useLogo";
 
 const Login = () => {
+  const logo = useLogo();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +47,7 @@ const Login = () => {
         <div className="glass-strong rounded-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-2">
-              <img src={logo} alt="Arbiz AI" className="h-10" />
+              <img src={logo} alt="Arbiz AI" className="h-[120px]" />
             </div>
             <h1 className="text-2xl font-display font-bold text-foreground">Sign In</h1>
             <p className="text-muted-foreground text-sm">Enter your email and password</p>

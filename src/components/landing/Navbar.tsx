@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import { useLogo } from "@/hooks/useLogo";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(true);
+  const logo = useLogo();
 
   const toggleDark = () => {
     setDark(!dark);
@@ -28,9 +29,9 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
-      <div className="container px-4 flex items-center justify-between h-16">
+      <div className="container px-4 flex items-center justify-between h-24">
         <a href="/" className="flex items-center">
-          <img src={logo} alt="Arbiz AI" className="h-8" />
+          <img src={logo} alt="Arbiz AI" className="h-20" />
         </a>
 
         {/* Desktop links */}
