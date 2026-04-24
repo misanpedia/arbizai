@@ -29,9 +29,9 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
-      <div className="container px-4 flex items-center justify-between h-20">
+      <div className="container px-4 flex items-center justify-between h-24">
         <a href="/" className="flex items-center">
-          <img src={logo} alt="Arbiz AI" className="h-16" />
+          <img src={logo} alt="Arbiz AI" className="h-20" />
         </a>
 
         {/* Desktop links */}
