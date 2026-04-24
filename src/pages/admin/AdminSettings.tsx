@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Save, Key, Percent, Award, Coins, Phone, HelpCircle } from "lucide-react";
+import { Settings, Save, Key, Percent, Award, Coins, Phone, HelpCircle, Image as ImageIcon, Upload, RotateCcw } from "lucide-react";
 import { MessageSquare, Send, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { broadcastLogo, useLogo } from "@/hooks/useLogo";
 
 const defaultSettings = {
   withdrawal_fee: "5",
