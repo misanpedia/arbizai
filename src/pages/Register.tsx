@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, ArrowLeft, RefreshCw, Users } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { useLogo } from "@/hooks/useLogo";
 
 // Simple math captcha
 function generateCaptcha() {
@@ -36,6 +36,7 @@ function generateCaptcha() {
 }
 
 const Register = () => {
+  const logo = useLogo();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -122,7 +123,7 @@ const Register = () => {
         <div className="glass-strong rounded-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-2">
-              <img src={logo} alt="Arbiz AI" className="h-10" />
+              <img src={logo} alt="Arbiz AI" className="h-[120px]" />
             </div>
             <h1 className="text-2xl font-display font-bold text-foreground">Create Account</h1>
             <p className="text-muted-foreground text-sm">Start crypto investment with AI Arbitrage</p>

@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import logo from "@/assets/logo.png";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Zap, Eye, EyeOff } from "lucide-react";
+import { useLogo } from "@/hooks/useLogo";
 
 const ResetPassword = () => {
+  const logo = useLogo();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -58,7 +59,7 @@ const ResetPassword = () => {
         <div className="glass-strong rounded-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-2">
-              <img src={logo} alt="Arbiz AI" className="h-10" />
+              <img src={logo} alt="Arbiz AI" className="h-[120px]" />
             </div>
             <h1 className="text-2xl font-display font-bold text-foreground">New Password</h1>
           </div>

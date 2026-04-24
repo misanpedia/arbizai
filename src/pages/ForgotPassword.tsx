@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import logo from "@/assets/logo.png";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, Zap, Mail } from "lucide-react";
+import { useLogo } from "@/hooks/useLogo";
 
 const ForgotPassword = () => {
+  const logo = useLogo();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -37,7 +38,7 @@ const ForgotPassword = () => {
         <div className="glass-strong rounded-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-2">
-              <img src={logo} alt="Arbiz AI" className="h-10" />
+              <img src={logo} alt="Arbiz AI" className="h-[120px]" />
             </div>
             <h1 className="text-2xl font-display font-bold text-foreground">Reset Password</h1>
             <p className="text-muted-foreground text-sm">Enter your email to receive a reset link</p>
