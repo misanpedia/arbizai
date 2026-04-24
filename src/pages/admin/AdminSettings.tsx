@@ -66,6 +66,73 @@ const AdminSettings = () => {
   const [_showApiKey, _setShowApiKey] = useState(false); // unused, kept to avoid breaking
   const [testingTelegram, setTestingTelegram] = useState(false);
   const [telegramTestResult, setTelegramTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const currentLogo = useLogo();
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const onLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "File tidak valid", description: "Mohon pilih file gambar (PNG, JPG, SVG, WEBP).", variant: "destructive" });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Ukuran terlalu besar", description: "Maks 2MB.", variant: "destructive" });
+      return;
+    }
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const applyLogo = async () => {
+    if (!logoFile) return;
+    setUploadingLogo(true);
+    try {
+      const ext = logoFile.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `logo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("branding").upload(path, logoFile, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: logoFile.type,
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("branding").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const { error: setErr } = await supabase.from("system_settings").upsert(
+        { key: "logo_url", value: JSON.parse(JSON.stringify(url)), updated_by: user?.id },
+        { onConflict: "key" }
+      );
+      if (setErr) throw setErr;
+      broadcastLogo(url);
+      setLogoFile(null);
+      setLogoPreview(null);
+      toast({ title: "Logo berhasil diterapkan", description: "Logo baru kini tampil di seluruh platform." });
+    } catch (err: any) {
+      toast({ title: "Gagal upload logo", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const resetLogo = async () => {
+    setUploadingLogo(true);
+    try {
+      await supabase.from("system_settings").upsert(
+        { key: "logo_url", value: JSON.parse(JSON.stringify("")), updated_by: user?.id },
+        { onConflict: "key" }
+      );
+      broadcastLogo("");
+      setLogoFile(null);
+      setLogoPreview(null);
+      toast({ title: "Logo direset", description: "Kembali menggunakan logo bawaan." });
+    } catch (err: any) {
+      toast({ title: "Gagal reset", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const isValidChatId = (id: string) => /^-?\d+$/.test(id.trim());
   const looksLikeUsername = (id: string) => id.trim().startsWith("@");
