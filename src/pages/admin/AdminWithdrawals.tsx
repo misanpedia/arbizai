@@ -20,19 +20,19 @@ const AdminWithdrawals = () => {
   useEffect(() => { fetchWithdrawals(); }, [filter]);
 
   const handleAction = async (id: string, action: "approved" | "rejected") => {
-    const tx = withdrawals.find(w => w.id === id);
-    if (action === "approved" && tx) {
-      const { data, error: rpcError } = await supabase.functions.invoke("admin-wallet-op", {
-        body: { op: "debit", user_id: tx.user_id, currency: tx.currency, amount: Number(tx.amount) },
+    const { data, error } = await supabase.functions.invoke("process-withdrawal", {
+      body: { transaction_id: id, action },
+    });
+    if (error || data?.success === false) {
+      toast({
+        title: "Error processing withdrawal",
+        description: error?.message || data?.error || "Unknown error",
+        variant: "destructive",
       });
-      if (rpcError || data?.success === false) {
-        toast({ title: "Insufficient balance or wallet error", description: rpcError?.message || data?.error, variant: "destructive" });
-        return;
-      }
+      return;
     }
-    const { error } = await supabase.from("transactions").update({ status: action }).eq("id", id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: `Withdrawal ${action}` }); fetchWithdrawals(); }
+    toast({ title: `Withdrawal ${action}` });
+    fetchWithdrawals();
   };
 
   return (
