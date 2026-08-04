@@ -274,6 +274,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_config: {
+        Row: {
+          api_key: string | null
+          created_at: string
+          id: string
+          ipn_secret: string | null
+          is_enabled: boolean
+          min_amount: number
+          pay_currency: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          ipn_secret?: string | null
+          is_enabled?: boolean
+          min_amount?: number
+          pay_currency?: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          ipn_secret?: string | null
+          is_enabled?: boolean
+          min_amount?: number
+          pay_currency?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -39,6 +39,7 @@ import AdminSystemMonitor from "./pages/admin/AdminSystemMonitor";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminManagement from "./pages/admin/AdminManagement";
 import AdminDepositWallets from "./pages/admin/AdminDepositWallets";
+import AdminPaymentGateway from "./pages/admin/AdminPaymentGateway";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminSpinControl from "./pages/admin/AdminSpinControl";
 import AdminCheckinSettings from "./pages/admin/AdminCheckinSettings";
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/admin/kyc" element={<AdminRoute><AdminKYC /></AdminRoute>} />
             <Route path="/admin/deposits" element={<AdminRoute><AdminDeposits /></AdminRoute>} />
             <Route path="/admin/deposit-wallets" element={<AdminRoute><AdminDepositWallets /></AdminRoute>} />
+            <Route path="/admin/payment-gateway" element={<AdminRoute><AdminPaymentGateway /></AdminRoute>} />
             <Route path="/admin/withdrawals" element={<AdminRoute><AdminWithdrawals /></AdminRoute>} />
             <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
             <Route path="/admin/profit-engine" element={<AdminRoute><AdminProfitEngine /></AdminRoute>} />
