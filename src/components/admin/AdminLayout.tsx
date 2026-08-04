@@ -5,7 +5,7 @@ import {
   BarChart3, Users, ShieldCheck, ArrowDownCircle, ArrowUpCircle,
   TrendingUp, Cpu, Wallet, GitBranch, FileText, Bell, Shield,
   Activity, Settings, UserCog, Menu, X, ChevronLeft, LogOut, Zap, Coins,
-  Megaphone, CalendarCheck, Award, MessageCircle
+  Megaphone, CalendarCheck, Award, MessageCircle, CreditCard
 } from "lucide-react";
 
 const menuItems = [
@@ -14,6 +14,7 @@ const menuItems = [
   { path: "/admin/kyc", label: "KYC", icon: ShieldCheck },
   { path: "/admin/deposits", label: "Deposits", icon: ArrowDownCircle },
   { path: "/admin/deposit-wallets", label: "Deposit Wallets", icon: Coins },
+  { path: "/admin/payment-gateway", label: "Payment Gateway", icon: CreditCard },
   { path: "/admin/withdrawals", label: "Withdrawals", icon: ArrowUpCircle },
   { path: "/admin/withdrawal-settings", label: "Withdrawal Config", icon: Settings },
   { path: "/admin/plans", label: "Investment Plans", icon: TrendingUp },
