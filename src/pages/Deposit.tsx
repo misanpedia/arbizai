@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, QrCode, Globe, Clock, Upload, DollarSign, AlertTriangle } from "lucide-react";
+import { Copy, QrCode, Globe, Clock, Upload, DollarSign, AlertTriangle, CreditCard, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,11 @@ const Deposit = () => {
   const [txHash, setTxHash] = useState("");
   const [loading, setLoading] = useState(false);
   const [pendingDeposits, setPendingDeposits] = useState<any[]>([]);
+  const [method, setMethod] = useState<"manual" | "auto">("manual");
+  const [gatewayEnabled, setGatewayEnabled] = useState(false);
+  const [gatewayMin, setGatewayMin] = useState(MIN_DEPOSIT);
+  const [autoAmount, setAutoAmount] = useState("");
+  const [autoLoading, setAutoLoading] = useState(false);
 
   useEffect(() => {
     const fetchWallets = async () => {
@@ -42,6 +47,21 @@ const Deposit = () => {
       }
     };
     fetchWallets();
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from("system_settings")
+      .select("value")
+      .eq("key", "nowpayments_public")
+      .maybeSingle()
+      .then(({ data }) => {
+        const v = data?.value as { enabled?: boolean; min_amount?: number } | null;
+        if (v?.enabled) {
+          setGatewayEnabled(true);
+          setGatewayMin(Number(v.min_amount ?? MIN_DEPOSIT));
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -61,6 +81,26 @@ const Deposit = () => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: "Copied!", description: "Address copied to clipboard" });
+  };
+
+  const handleAutoPay = async () => {
+    const amt = parseFloat(autoAmount || "0");
+    if (!amt || amt < gatewayMin) {
+      toast({ title: `Minimum deposit is $${gatewayMin}`, variant: "destructive" });
+      return;
+    }
+    setAutoLoading(true);
+    const { data, error } = await supabase.functions.invoke("nowpayments-create-payment", {
+      body: { amount: amt, success_url: `${window.location.origin}/deposit`, cancel_url: `${window.location.origin}/deposit` },
+    });
+    setAutoLoading(false);
+    if (error || !data?.invoice_url) {
+      toast({ title: "Payment error", description: data?.error || error?.message || "Failed to create invoice", variant: "destructive" });
+      return;
+    }
+    window.open(data.invoice_url, "_blank");
+    toast({ title: "Invoice created", description: "Complete the payment in the new tab. Balance credits automatically." });
+    setAutoAmount("");
   };
 
   const handleSubmitDeposit = async () => {
@@ -116,6 +156,45 @@ const Deposit = () => {
   return (
     <DashboardLayout title="Deposit">
       <div className="max-w-lg mx-auto space-y-6">
+        {gatewayEnabled && (
+          <div className="glass-strong rounded-2xl p-2 grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setMethod("manual")}
+              className={`py-2.5 rounded-xl text-xs font-medium transition ${method === "manual" ? "gradient-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Manual Transfer
+            </button>
+            <button
+              onClick={() => setMethod("auto")}
+              className={`py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1 ${method === "auto" ? "gradient-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Zap className="w-3.5 h-3.5" /> Auto Pay
+            </button>
+          </div>
+        )}
+
+        {gatewayEnabled && method === "auto" && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass-strong rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">Instant Crypto Payment</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Pay with crypto through our payment gateway. Your balance is credited automatically once the payment is confirmed on-chain.
+            </p>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Amount (USD) *</label>
+              <Input type="number" placeholder={`Min $${gatewayMin}`} value={autoAmount} onChange={e => setAutoAmount(e.target.value)} className="glass" min={gatewayMin} />
+            </div>
+            <Button onClick={handleAutoPay} disabled={autoLoading || !autoAmount} className="w-full gradient-primary text-primary-foreground">
+              <Zap className="w-4 h-4 mr-2" />
+              {autoLoading ? "Creating invoice..." : "Pay Now"}
+            </Button>
+            <p className="text-[10px] text-muted-foreground">No admin approval needed — confirmation is automatic.</p>
+          </motion.div>
+        )}
+
+        {(!gatewayEnabled || method === "manual") && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
           {/* Network Selector */}
           {wallets.length > 0 && (
@@ -209,6 +288,7 @@ const Deposit = () => {
             </div>
           )}
         </motion.div>
+        )}
 
         {/* Deposit history with commission status */}
         {pendingDeposits.length > 0 && (
